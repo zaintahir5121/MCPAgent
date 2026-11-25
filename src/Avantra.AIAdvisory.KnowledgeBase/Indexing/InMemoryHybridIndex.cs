@@ -80,10 +80,10 @@ public sealed partial class InMemoryHybridIndex(IServiceProvider services, ILogg
         Fuse(bm25);
         if (vector is not null) Fuse(vector);
 
-        // Normalise to 0..1 relative to a perfect rank-1 hit in every ranking, then weight by source trust.
+        // Normalise to 0..1 relative to a perfect rank-1 hit in every ranking; source trust only breaks near-ties.
         var maxPossible = (vector is null ? 1 : 2) * (1.0 / (RrfK + 1));
         return fused.Values
-            .Select(x => (x.Entry, Score: x.Score / maxPossible * (0.8 + 0.05 * (int)x.Entry.Document.Trust)))
+            .Select(x => (x.Entry, Score: x.Score / maxPossible * (0.99 + 0.0025 * (int)x.Entry.Document.Trust)))
             .OrderByDescending(x => x.Score)
             .Take(query.Top)
             .Select(x => new KnowledgeHit(x.Entry.Chunk.Id, x.Entry.Document.Id, x.Entry.Document.VendorCode, x.Entry.Document.Title,

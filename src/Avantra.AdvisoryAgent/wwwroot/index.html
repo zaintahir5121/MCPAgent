@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avantra Advisor</title>
+<style>
+  :root { --brand:#0b3d91; --brand2:#1565c0; --bg:#f4f6fa; --card:#fff; --text:#1b1f24; --muted:#5b6472; --line:#dde3ec; --me:#e8f0fe; }
+  * { box-sizing:border-box; }
+  html, body { height:100%; margin:0; }
+  body { font-family:"Segoe UI", system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; }
+  header { background:var(--brand); color:#fff; padding:.7rem 1rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+  header h1 { font-size:1.1rem; margin:0; font-weight:600; }
+  header .status { font-size:.8rem; opacity:.9; flex:1; min-width:200px; }
+  header button { background:#fff; color:var(--brand); border:none; border-radius:6px; padding:.4rem .8rem; font:inherit; font-size:.85rem; cursor:pointer; }
+  header button:disabled { opacity:.6; cursor:wait; }
+  main { flex:1; overflow-y:auto; padding:1rem; }
+  .wrap { max-width:860px; margin:0 auto; }
+  .msg { margin:.6rem 0; display:flex; }
+  .msg .bubble { padding:.7rem .9rem; border-radius:12px; max-width:100%; line-height:1.45; overflow-x:auto; }
+  .msg.me { justify-content:flex-end; } .msg.me .bubble { background:var(--me); max-width:80%; white-space:pre-wrap; }
+  .msg.bot .bubble { background:var(--card); border:1px solid var(--line); width:100%; }
+  .msg.sys .bubble { background:#fff7e6; border:1px solid #f3d9a4; font-size:.88rem; width:100%; }
+  .bubble h3 { margin:.1rem 0 .4rem; color:var(--brand); font-size:1.05rem; }
+  .bubble p { margin:.35rem 0; } .bubble ul, .bubble ol { margin:.3rem 0; padding-left:1.3rem; }
+  .bubble table { border-collapse:collapse; font-size:.88rem; margin:.4rem 0; }
+  .bubble th, .bubble td { border:1px solid var(--line); padding:.3rem .5rem; text-align:left; } .bubble th { background:#f3f6fb; }
+  .meta { font-size:.72rem; color:var(--muted); margin-top:.35rem; }
+  .chips { display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem 0 1rem; }
+  .chips button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:.35rem .75rem; font:inherit; font-size:.85rem; cursor:pointer; color:var(--brand2); text-align:left; }
+  footer { background:#fff; border-top:1px solid var(--line); padding:.7rem 1rem; }
+  form { max-width:860px; margin:0 auto; display:flex; gap:.5rem; }
+  textarea { flex:1; resize:none; font:inherit; padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; min-height:46px; max-height:160px; }
+  form button { background:var(--brand2); color:#fff; border:none; border-radius:8px; padding:0 1.2rem; font:inherit; cursor:pointer; }
+  form button:disabled { opacity:.5; }
+  .typing { color:var(--muted); font-style:italic; }
+  .hint { max-width:860px; margin:.35rem auto 0; font-size:.75rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Avantra Advisor · Planview</h1>
+  <div class="status" id="status">Connecting…</div>
+  <button id="ingest" title="Re-ingest the Planview documents into planview-index">Ingest Planview now</button>
+  <button id="newchat">New chat</button>
+</header>
+<main id="main"><div class="wrap" id="log">
+  <div class="msg bot"><div class="bubble">
+    <h3>Hi — I'm the Planview advisor.</h3>
+    <p>Describe your organisation and what you need, and I'll recommend Planview products with sources. Or ask any Planview question.</p>
+    <div class="chips" id="chips">
+      <button>We have 2,000 employees, 150 project managers and 40 portfolio managers. We need portfolio management, strategic planning, resource management and financial planning. Which Planview products do we need?</button>
+      <button>What does Planview AgilePlace do?</button>
+      <button>Compare Planview Portfolios vs AdaptiveWork vs PPM Pro</button>
+      <button>How does Planview connect Jira teams to portfolio planning?</button>
+    </div>
+  </div></div>
+</div></main>
+<footer>
+  <form id="form">
+    <textarea id="input" rows="1" placeholder="Ask anything about Planview, or describe your needs…" maxlength="4000"></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+  <div class="hint">Enter to send · Shift+Enter for a new line · Pricing and licence tiers are never invented — they are confirmed with Planview.</div>
+</footer>
+<script>
+const $ = id => document.getElementById(id);
+let chatId = null;
+try { chatId = sessionStorage.getItem('advisorChatId'); } catch {}
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*/g,'$1<i>$2</i>').replace(/_(.+?)_/g,'<i>$1</i>');
+function md(text) {
+  const lines = text.replace(/\r/g,'').split('\n'); let html = '', list = null, table = [];
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  const flushTable = () => {
+    if (!table.length) return;
+    const rows = table.filter(r => !/^\|\s*-+/.test(r)).map(r => r.trim().replace(/^\||\|$/g,'').split('|').map(c => c.trim()));
+    html += '<table>' + rows.map((r,i) => '<tr>' + r.map(c => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join('') + '</tr>').join('') + '</table>';
+    table = [];
+  };
+  for (const line of lines) {
+    if (/^\s*\|/.test(line)) { closeList(); table.push(line); continue; } else flushTable();
+    let m;
+    if ((m = line.match(/^#{1,4}\s+(.*)/))) { closeList(); html += `<h3>${inline(m[1])}</h3>`; }
+    else if ((m = line.match(/^\s*[-*]\s+(.*)/))) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; }
+    else if ((m = line.match(/^\s*\d+\.\s+(.*)/))) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; }
+    else if (line.trim() === '') closeList();
+    else { closeList(); html += `<p>${inline(line)}</p>`; }
+  }
+  closeList(); flushTable(); return html;
+}
+
+function add(role, content, meta) {
+  const div = document.createElement('div'); div.className = 'msg ' + role;
+  const b = document.createElement('div'); b.className = 'bubble';
+  if (role === 'me') b.textContent = content; else b.innerHTML = role === 'bot' ? md(content) : esc(content);
+  if (meta) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = meta; b.appendChild(m); }
+  div.appendChild(b); $('log').appendChild(div); $('main').scrollTop = $('main').scrollHeight; return div;
+}
+
+async function send(text) {
+  text = text.trim(); if (!text) return;
+  add('me', text); $('input').value = ''; $('send').disabled = true;
+  const wait = add('bot', '_Thinking…_');
+  try {
+    const res = await fetch('api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text, chatId }) });
+    const data = await res.json();
+    wait.remove();
+    if (!res.ok) { add('sys', data.detail || data.title || 'Something went wrong.'); return; }
+    chatId = data.chatId; try { sessionStorage.setItem('advisorChatId', chatId); } catch {}
+    add('bot', data.answer, `mode: ${data.mode}`);
+  } catch (e) { wait.remove(); add('sys', 'Could not reach the advisor service: ' + e.message); }
+  finally { $('send').disabled = false; $('input').focus(); }
+}
+
+async function loadStatus() {
+  try {
+    const s = await (await fetch('api/status')).json(); const c = s.connectors[0]; const last = s.ingestion.lastRun;
+    $('status').textContent = `${s.mode} · ${c.index} (${c.search}) · ${c.publishedDocuments} documents` +
+      (last ? ` · last ingestion ${new Date(last.finishedAt).toLocaleString()}` : (s.ingestion.running ? ' · ingesting…' : ''));
+  } catch { $('status').textContent = 'Service not reachable'; }
+}
+
+$('form').addEventListener('submit', e => { e.preventDefault(); send($('input').value); });
+$('input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($('input').value); } });
+$('chips').addEventListener('click', e => { if (e.target.tagName === 'BUTTON') send(e.target.textContent); });
+$('newchat').addEventListener('click', () => { chatId = null; try { sessionStorage.removeItem('advisorChatId'); } catch {} location.reload(); });
+$('ingest').addEventListener('click', async () => {
+  $('ingest').disabled = true; $('ingest').textContent = 'Ingesting…';
+  try {
+    const res = await fetch('api/connectors/planview/ingest', { method:'POST' }); const r = await res.json();
+    add('sys', res.ok ? `Ingestion done into ${r.indexName}: ${r.files} files · ${r.created} new · ${r.updated} updated · ${r.unchanged} unchanged · ${r.quarantined} quarantined · ${r.failed} failed.`
+                      : (r.title || 'Ingestion failed'));
+  } catch (e) { add('sys', 'Ingestion failed: ' + e.message); }
+  finally { $('ingest').disabled = false; $('ingest').textContent = 'Ingest Planview now'; loadStatus(); }
+});
+loadStatus(); setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>

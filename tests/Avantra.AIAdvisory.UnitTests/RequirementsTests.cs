@@ -41,6 +41,21 @@ public class RequirementsTests
     public void Heuristic_parses_employee_phrasings(string text, int expected) =>
         Assert.Equal(expected, HeuristicRequirementsExtractor.ExtractOrganization(text).Employees);
 
+    [Theory]
+    [InlineData("we need portfolio and resource management", "portfolio management and resource management")]
+    [InlineData("portfolio, resource and financial management", "portfolio management, resource management and financial management")]
+    [InlineData("strategic and capacity planning", "strategic planning and capacity planning")]
+    public void Shared_endings_are_expanded(string input, string expectedFragment) =>
+        Assert.Contains(expectedFragment, HeuristicRequirementsExtractor.ExpandSharedHeads(input));
+
+    [Fact]
+    public async Task Coordinated_capabilities_are_all_extracted()
+    {
+        var p = (await new HeuristicRequirementsExtractor().ExtractAsync("We need portfolio and resource management.", TestPack.Planview, default))!;
+        Assert.Contains(p.Requirements, r => r.CapabilityCode == "portfolio-management");
+        Assert.Contains(p.Requirements, r => r.CapabilityCode == "resource-management");
+    }
+
     [Fact]
     public void Analyzer_discards_llm_capability_codes_outside_the_taxonomy()
     {

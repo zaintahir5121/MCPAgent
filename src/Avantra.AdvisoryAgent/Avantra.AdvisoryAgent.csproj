@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Avantra.AdvisoryAgent</RootNamespace>
+    <UserSecretsId>avantra-advisory-agent</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Avantra.AIAdvisory.Application\Avantra.AIAdvisory.Application.csproj" />
+    <ProjectReference Include="..\Avantra.AIAdvisory.Infrastructure\Avantra.AIAdvisory.Infrastructure.csproj" />
+    <ProjectReference Include="..\Avantra.AIAdvisory.KnowledgeBase\Avantra.AIAdvisory.KnowledgeBase.csproj" />
+    <ProjectReference Include="..\Avantra.AIAdvisory.Agents\Avantra.AIAdvisory.Agents.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Avantra.AdvisoryAgent.Tests" />
+  </ItemGroup>
+</Project>

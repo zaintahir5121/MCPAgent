@@ -12,6 +12,21 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddKnowledgePlatform(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddKnowledgeCore(configuration);
+
+        var provider = configuration[$"{KnowledgePackOptions.Section}:IndexProvider"] ?? "InMemory";
+        if (string.Equals(provider, "AzureAiSearch", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<IKnowledgeIndex, AzureAiSearchIndex>();
+        else
+            services.AddSingleton<IKnowledgeIndex, InMemoryHybridIndex>();
+
+        services.AddHostedService<KnowledgeBootstrapper>();
+        return services;
+    }
+
+    /// <summary>Packs, parsers and ingestion without choosing an index or adding startup jobs (for hosts that bring their own).</summary>
+    public static IServiceCollection AddKnowledgeCore(this IServiceCollection services, IConfiguration configuration)
+    {
         services.Configure<KnowledgePackOptions>(configuration.GetSection(KnowledgePackOptions.Section));
         services.Configure<AzureAiSearchOptions>(configuration.GetSection(AzureAiSearchOptions.Section));
 
@@ -23,14 +38,6 @@ public static class DependencyInjection
         services.AddSingleton<IDocumentParser, PlainTextParser>();
         services.AddSingleton<DocumentParserRegistry>();
         services.AddScoped<IngestionService>();
-
-        var provider = configuration[$"{KnowledgePackOptions.Section}:IndexProvider"] ?? "InMemory";
-        if (string.Equals(provider, "AzureAiSearch", StringComparison.OrdinalIgnoreCase))
-            services.AddSingleton<IKnowledgeIndex, AzureAiSearchIndex>();
-        else
-            services.AddSingleton<IKnowledgeIndex, InMemoryHybridIndex>();
-
-        services.AddHostedService<KnowledgeBootstrapper>();
         return services;
     }
 }

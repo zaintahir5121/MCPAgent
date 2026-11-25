@@ -60,7 +60,7 @@ public sealed class FileSystemCatalogueRepository : ICatalogueRepository
 
     public VendorPack? GetPack(string vendorCode) => _packs.GetValueOrDefault(vendorCode ?? string.Empty);
 
-    internal static string ResolvePath(string path)
+    public static string ResolvePath(string path)
     {
         if (Path.IsPathRooted(path)) return path;
         // Walk up from the app base directory so it works from bin/, from the repo root and in containers.

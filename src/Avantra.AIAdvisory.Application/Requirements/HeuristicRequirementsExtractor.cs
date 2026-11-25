@@ -17,6 +17,21 @@ public sealed partial class HeuristicRequirementsExtractor : IRequirementsExtrac
     [GeneratedRegex(@"(?<num>\d{1,3}(?:[,\s]\d{3})+|\d+(?:\.\d+)?)\s*(?<k>k\b)?\s*\+?\s*-?\s*(?<what>employees|employee|staff|people|person|personnel|workers|project\s+managers|pms|portfolio\s+managers|resource\s+managers|business\s+units|bus\b|divisions|executives|team\s+members|contributors|engineers|developers)", RegexOptions.IgnoreCase)]
     private static partial Regex CountPattern();
 
+    // "portfolio, resource and financial management" -> "portfolio management, resource management and financial management"
+    [GeneratedRegex(@"\b(?!management\b|planning\b|governance\b)([a-z]+)(\s*(?:,|\band\b|&|/)\s*)(?!management\b|planning\b|governance\b)([a-z]+)\s+(management|planning|governance)\b")]
+    private static partial Regex SharedHead();
+
+    internal static string ExpandSharedHeads(string lower)
+    {
+        for (var i = 0; i < 6; i++)
+        {
+            var next = SharedHead().Replace(lower, "$1 $4$2$3 $4");
+            if (next == lower) break;
+            lower = next;
+        }
+        return lower;
+    }
+
     [GeneratedRegex(@"(?<=[.!?;\n])\s+|\n")]
     private static partial Regex SentenceSplit();
 
@@ -36,7 +51,7 @@ public sealed partial class HeuristicRequirementsExtractor : IRequirementsExtrac
         var sentences = SentenceSplit().Split(text).Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
         foreach (var sentence in sentences)
         {
-            var lower = sentence.ToLowerInvariant();
+            var lower = ExpandSharedHeads(sentence.ToLowerInvariant());
             var priority = DetectPriority(lower);
             var matchedAny = false;
             foreach (var cap in pack.Capabilities)

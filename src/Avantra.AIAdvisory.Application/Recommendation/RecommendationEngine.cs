@@ -25,6 +25,9 @@ public sealed class RecommendationEngine
         _ => 1,
     };
 
+    /// <summary>Requirements the customer did not state (inferred) count half, so a product is never added just for an inferred need.</summary>
+    public static double Weight(Requirement r) => Weight(r.Priority) * (r.Origin == RequirementOrigin.Inferred ? 0.5 : 1.0);
+
     public static double CoverageValue(CoverageLevel? c) => c switch
     {
         CoverageLevel.Core => 1.0,
@@ -41,7 +44,7 @@ public sealed class RecommendationEngine
 
         var products = pack.Products.Where(p => p.Verification != VerificationStatus.Deprecated).ToList();
         var individual = products
-            .Select(p => (Product: p, Score: reqs.Sum(r => Weight(r.Priority) * CoverageValue(p.GetCapability(r.CapabilityCode)?.Coverage))))
+            .Select(p => (Product: p, Score: reqs.Sum(r => Weight(r) * CoverageValue(p.GetCapability(r.CapabilityCode)?.Coverage))))
             .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score).ThenBy(x => x.Product.Code, StringComparer.Ordinal)
             .Take(options.CandidatePool)
@@ -91,10 +94,10 @@ public sealed class RecommendationEngine
     private static Evaluated EvaluateBundle(IReadOnlyList<Product> bundle, RequirementProfile profile, VendorPack pack, RecommendationOptions options)
     {
         var reqs = profile.Requirements;
-        var totalWeight = Math.Max(1e-9, reqs.Sum(r => Weight(r.Priority)));
+        var totalWeight = Math.Max(1e-9, reqs.Sum(r => Weight(r)));
         var mustCount = reqs.Count(r => r.Priority == RequirementPriority.Must);
         var coverage = reqs.Select(r => BestFor(r, bundle)).ToList();
-        var weighted = reqs.Select((r, i) => Weight(r.Priority) * CoverageValue(coverage[i].Level)).Sum() / totalWeight;
+        var weighted = reqs.Select((r, i) => Weight(r) * CoverageValue(coverage[i].Level)).Sum() / totalWeight;
         var mustCov = mustCount == 0 ? 1.0 : reqs.Where((r, i) => r.Priority == RequirementPriority.Must && coverage[i].Level is not null).Count() / (double)mustCount;
         var rules = ApplyRules(pack, profile, bundle);
         var score = weighted - options.PenaltyPerAdditionalProduct * Math.Max(0, bundle.Count - 1) + rules.Sum(r => r.Adjustment);
