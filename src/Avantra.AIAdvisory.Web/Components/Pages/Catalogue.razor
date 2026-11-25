@@ -1,0 +1,55 @@
+@page "/catalogue"
+@inject AdvisoryApiClient Api
+
+<h1>Product &amp; capability catalogue</h1>
+<p class="lead">The curated, versioned catalogue that drives recommendations. Each mapping cites its source and shows its verification state.</p>
+
+@if (_error is not null) { <p class="error">@_error</p> }
+<input class="filter" placeholder="Filter products or capabilities..." @bind="_filter" @bind:event="oninput" />
+
+<section class="card">
+    <h3>Coverage matrix</h3>
+    <div class="scroll">
+        <table class="matrix">
+            <thead><tr><th>Capability</th>@foreach (var p in Filtered) { <th title="@p.Summary">@p.Name.Replace("Planview ", "")</th> }</tr></thead>
+            <tbody>
+            @foreach (var c in _caps.Where(c => string.IsNullOrEmpty(_filter) || c.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase) || Filtered.Any(p => p.GetCapability(c.Code) is not null)))
+            {
+                <tr><td title="@c.Description">@c.Name</td>
+                    @foreach (var p in Filtered)
+                    {
+                        var pc = p.GetCapability(c.Code);
+                        <td class="cov @(pc?.Coverage.ToString() ?? "none")" title="@pc?.Notes">@(pc?.Coverage switch { CoverageLevel.Core => "●", CoverageLevel.Supported => "●", CoverageLevel.ViaIntegration => "○", _ => "" })</td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <p class="muted">● Core · <span style="opacity:.45">●</span> Supported · ○ Via integration · blank = not listed in the knowledge base (not proof of absence)</p>
+</section>
+
+@foreach (var p in Filtered)
+{
+    <section class="card">
+        <div class="row between"><h3>@p.Name</h3><span class="badge @(p.Verification == VerificationStatus.Verified ? "ok" : "warn")">@p.Verification</span></div>
+        <p>@p.Summary</p>
+        <p class="muted">Also known as: @string.Join(", ", p.Aliases) · Solutions: @string.Join(", ", p.Solutions) · Deployment: @string.Join(", ", p.DeploymentModels)</p>
+    </section>
+}
+
+@code {
+    private IReadOnlyList<Product> _products = [];
+    private IReadOnlyList<Capability> _caps = [];
+    private string? _filter, _error;
+
+    private IEnumerable<Product> Filtered => _products.Where(p => string.IsNullOrEmpty(_filter)
+        || p.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+        || p.Capabilities.Any(c => c.CapabilityCode.Contains(_filter, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _products = await Api.ProductsAsync("planview"); _caps = await Api.CapabilitiesAsync("planview"); }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+}

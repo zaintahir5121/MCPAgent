@@ -1,0 +1,55 @@
+@page "/knowledge"
+@inject AdvisoryApiClient Api
+
+<h1>Knowledge search &amp; assistant</h1>
+<p class="lead">Hybrid search over published, vendor-isolated sources, and a grounded assistant (Microsoft Agent Framework) for open questions.</p>
+
+<section class="card">
+    <div class="row">
+        <input class="grow" placeholder="e.g. How do agile teams in Jira connect to portfolio planning?" @bind="_q" @onkeyup="KeyAsync" />
+        <button class="primary" disabled="@_busy" @onclick="SearchAsync">Search</button>
+        <button disabled="@_busy" @onclick="AskAsync">Ask assistant</button>
+    </div>
+    @if (_error is not null) { <p class="error">@_error</p> }
+</section>
+
+@if (_answer is not null)
+{
+    <section class="card summary">
+        <div class="row between"><h3>Assistant</h3><span class="badge neutral">@_answer.Mode</span></div>
+        <p class="pre">@_answer.Answer</p>
+        <p class="disclaimer">@_answer.Notice</p>
+    </section>
+}
+
+@if (_result is not null)
+{
+    <p class="muted">@_result.Notice</p>
+    @foreach (var h in _result.Hits)
+    {
+        <section class="card hit">
+            <div class="row between"><strong>@h.DocumentTitle</strong><span>score @h.Score.ToString("0.00") <span class="badge neutral">@h.Trust</span></span></div>
+            <p class="muted">@h.Section · products: @string.Join(", ", h.ProductCodes) · capabilities: @string.Join(", ", h.CapabilityCodes)</p>
+            <p class="pre">@h.Snippet</p>
+        </section>
+    }
+}
+
+@code {
+    private string? _q, _error;
+    private bool _busy;
+    private KnowledgeSearchResult? _result;
+    private AssistantAnswer? _answer;
+
+    private async Task KeyAsync(KeyboardEventArgs e) { if (e.Key == "Enter") await SearchAsync(); }
+
+    private async Task SearchAsync() => await Run(async () => { _answer = null; _result = await Api.SearchAsync("planview", _q ?? ""); });
+    private async Task AskAsync() => await Run(async () => { _result = null; _answer = await Api.AskAsync("planview", _q ?? ""); });
+
+    private async Task Run(Func<Task> action)
+    {
+        if (string.IsNullOrWhiteSpace(_q)) return;
+        _busy = true; _error = null;
+        try { await action(); } catch (Exception ex) { _error = ex.Message; } finally { _busy = false; }
+    }
+}
