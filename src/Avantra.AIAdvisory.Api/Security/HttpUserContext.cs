@@ -33,13 +33,16 @@ public sealed class HttpUserContext(IHttpContextAccessor accessor) : IUserContex
         User?.IsInRole(role) == true || User?.FindAll("roles").Any(c => c.Value == role) == true;
 }
 
-/// <summary>Used by background jobs (startup seeding) where there is no HTTP request.</summary>
+/// <summary>
+/// Identity of background jobs (startup knowledge seeding) where there is no HTTP request.
+/// Least privilege: it may manage knowledge, but can never review/approve advisory output.
+/// </summary>
 public sealed class SystemUserContext : IUserContext
 {
     public string TenantId => "system";
     public string UserId => "system";
     public string Channel => "system";
-    public bool IsInRole(string role) => true;
+    public bool IsInRole(string role) => role == Roles.KnowledgeAdmin;
 }
 
 /// <summary>Chooses the HTTP context when there is a request, otherwise the system identity.</summary>

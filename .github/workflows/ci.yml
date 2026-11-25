@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [ main, 'claude/**' ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore Avantra.AIAdvisory.sln
+      - name: Build
+        run: dotnet build Avantra.AIAdvisory.sln --no-restore -c Release
+      - name: Test (no network, no AI key required)
+        run: dotnet test Avantra.AIAdvisory.sln --no-build -c Release --logger "trx;LogFileName=results.trx"
+      - name: Vulnerable package check
+        run: dotnet list Avantra.AIAdvisory.sln package --vulnerable --include-transitive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'
+
+  containers:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f deployment/docker/api.Dockerfile -t advisory-api:${{ github.sha }} .
+      - name: Build Web image
+        run: docker build -f deployment/docker/web.Dockerfile -t advisory-web:${{ github.sha }} .
+      # Push to ACR and deploy (az deployment group create + az containerapp update) in a protected
+      # environment job using OIDC federated credentials (azure/login) - see docs/07 section 4.

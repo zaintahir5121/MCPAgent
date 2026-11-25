@@ -7,6 +7,7 @@ using Avantra.AIAdvisory.Application.Abstractions;
 using Avantra.AIAdvisory.Application.Knowledge;
 using Avantra.AIAdvisory.Infrastructure;
 using Avantra.AIAdvisory.KnowledgeBase;
+using Avantra.AIAdvisory.KnowledgeBase.Ingestion;
 using Avantra.AIAdvisory.McpServer;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
@@ -80,6 +81,15 @@ app.MapAdvisoryApi();
 app.MapAdvisoryMcp("/mcp").RequireAuthorization(Policies.AdvisoryRead);
 
 await app.Services.InitializeDatabaseAsync();
+
+// Container Apps Job mode: run the ingestion/seeding pipeline once and exit (no HTTP server).
+if (args.Contains("--ingest-only"))
+{
+    var bootstrapper = ActivatorUtilities.CreateInstance<KnowledgeBootstrapper>(app.Services);
+    await bootstrapper.StartAsync(CancellationToken.None);
+    return;
+}
+
 await app.RunAsync();
 
 public partial class Program;
