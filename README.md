@@ -10,7 +10,9 @@ First vendor domain: **Planview**. Salesforce and OutSystems are added as data p
 
 ## Documentation
 
-**One-page architecture & system design (draw.io):** [`docs/diagrams/avantra-ai-advisory-architecture.drawio`](docs/diagrams/avantra-ai-advisory-architecture.drawio) — open at https://app.diagrams.net (File → Open from → Device) or in VS Code with the Draw.io Integration extension.
+**Simple overview (draw.io, 3 tabs: High-Level Architecture · Low-Level Design · Delivery Plan):** [`docs/diagrams/avantra-ai-advisory-overview.drawio`](docs/diagrams/avantra-ai-advisory-overview.drawio) — PNG previews in `docs/diagrams/overview-*.png`.
+
+**Detailed one-page architecture (draw.io):** [`docs/diagrams/avantra-ai-advisory-architecture.drawio`](docs/diagrams/avantra-ai-advisory-architecture.drawio) — open at https://app.diagrams.net (File → Open from → Device) or in VS Code with the Draw.io Integration extension.
 
 | # | Document | Contents |
 |---|---|---|
