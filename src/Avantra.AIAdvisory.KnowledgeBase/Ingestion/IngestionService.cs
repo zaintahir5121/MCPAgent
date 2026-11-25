@@ -24,7 +24,8 @@ public sealed record IngestionRequest(
     IReadOnlyList<string>? ProductCodes = null,
     bool PublishImmediately = false,
     bool IsDemonstrationData = false,
-    DateOnly? RetrievedOn = null);
+    DateOnly? RetrievedOn = null,
+    bool Reprocess = false);
 
 public enum IngestionOutcome { Created, NewVersion, Unchanged, Quarantined }
 
@@ -35,7 +36,7 @@ public sealed record IngestionResult(Guid DocumentId, string ExternalId, int Ver
 /// Content-hash based idempotency and versioning: re-ingesting an unchanged document is a no-op; a changed
 /// document becomes a new version and the previous version is superseded and removed from the index.
 /// </summary>
-public sealed class IngestionService(
+public sealed partial class IngestionService(
     DocumentParserRegistry parsers,
     IKnowledgeStore store,
     IKnowledgeIndex index,
@@ -54,11 +55,13 @@ public sealed class IngestionService(
         using var buffer = new MemoryStream();
         await request.Content.CopyToAsync(buffer, ct);
         var bytes = buffer.ToArray();
-        var hash = Convert.ToHexString(SHA256.HashData(bytes));
+        // The hash covers the content AND the extraction pipeline version, so improving parsing/chunking re-processes
+        // documents on the next sync instead of keeping chunks produced by the old pipeline.
+        var hash = Convert.ToHexString(SHA256.HashData([.. bytes, .. System.Text.Encoding.UTF8.GetBytes("|pipeline:" + PipelineVersion)]));
         var externalId = request.ExternalId ?? Path.GetFileNameWithoutExtension(request.FileName).ToLowerInvariant();
 
         var existing = await store.FindByExternalIdAsync(kbCode, externalId, ct);
-        if (existing is not null && existing.ContentHash == hash)
+        if (existing is not null && existing.ContentHash == hash && !request.Reprocess)
             return new IngestionResult(existing.Id, externalId, existing.Version, IngestionOutcome.Unchanged, existing.Status, existing.Chunks.Count, "Content unchanged.");
 
         var parsed = await parsers.Resolve(request.FileName, request.ContentType).ParseAsync(new MemoryStream(bytes), request.FileName, ct);
@@ -128,6 +131,9 @@ public sealed class IngestionService(
         logger.LogInformation("Ingested {Vendor}/{ExternalId} v{Version}: {Outcome} ({Chunks} chunks)", doc.VendorCode, externalId, doc.Version, outcome, doc.Chunks.Count);
         return new IngestionResult(doc.Id, externalId, doc.Version, outcome, doc.Status, doc.Chunks.Count, doc.StatusReason);
     }
+
+    /// <summary>Bump when parsing, cleaning or chunking changes so existing documents are re-processed.</summary>
+    public const string PipelineVersion = "2";
 
     /// <summary>Curator approval: publish a pending/quarantined document (and supersede older versions).</summary>
     public async Task<KnowledgeDocument?> PublishAsync(Guid documentId, CancellationToken ct)

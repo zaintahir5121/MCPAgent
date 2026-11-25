@@ -62,7 +62,7 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
                 var (status, body, _) = await GetAsync(http, new Uri($"https://{u.Host}/robots.txt"), 512 * 1024, Politeness, ct);
                 r = status == HttpStatusCode.OK ? Robots.Parse(body) : Robots.AllowAll;
             }
-            catch (HttpRequestException) { r = Robots.AllowAll; }
+            catch (Exception) when (!ct.IsCancellationRequested) { r = Robots.AllowAll; }
             return robots[u.Host] = r;
         }
 
@@ -130,7 +130,7 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
                 var html = $"<html><head>{title}</head><body>{main}</body></html>";
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
                 var r = await ingestion.IngestAsync(new IngestionRequest(kb, Slug(uri) + ".html", "text/html", stream,
-                    ExternalId: externalId, SourceUrl: final.ToString(), Trust: cfg.Trust, PublishImmediately: true), ct);
+                    ExternalId: externalId, SourceUrl: final.ToString(), Trust: cfg.Trust, PublishImmediately: true, Reprocess: force), ct);
                 switch (r.Outcome)
                 {
                     case IngestionOutcome.Created: created++; break;
@@ -140,7 +140,7 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
                 }
                 if (r.Chunks == 0 && r.Outcome == IngestionOutcome.Created) Note(uri.ToString(), "Empty", "No readable content");
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 failed++;
                 Note(uri.ToString(), "Failed", ex.Message);
@@ -182,7 +182,7 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
                 pages.TryAdd(loc, lastmod);
             }
         }
-        catch (Exception ex) when (ex is XmlException or HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             logger.LogWarning(ex, "Could not read sitemap {Url}", sitemap);
         }
@@ -190,6 +190,22 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
 
     /// <summary>GET with manual redirects (same allowed host, https, max 3) and a size cap.</summary>
     private async Task<(HttpStatusCode Status, string Body, Uri Final)> GetAsync(HttpClient http, Uri uri, long maxBytes, Func<Uri, Task> politeness, CancellationToken ct)
+    {
+        try
+        {
+            var first = await GetOnceAsync(http, uri, maxBytes, politeness, ct);
+            if (first.Status is not (HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)) return (first.Status, first.Body, first.Final);
+            await Task.Delay(first.RetryAfter ?? TimeSpan.FromSeconds(30), ct);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10), ct); // timeout: wait, then one more attempt
+        }
+        var second = await GetOnceAsync(http, uri, maxBytes, politeness, ct);
+        return (second.Status, second.Body, second.Final);
+    }
+
+    private async Task<(HttpStatusCode Status, string Body, Uri Final, TimeSpan? RetryAfter)> GetOnceAsync(HttpClient http, Uri uri, long maxBytes, Func<Uri, Task> politeness, CancellationToken ct)
     {
         for (var hop = 0; hop < 4; hop++)
         {
@@ -201,24 +217,28 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
             if ((int)res.StatusCode is >= 300 and < 400 && res.Headers.Location is { } loc)
             {
                 var next = loc.IsAbsoluteUri ? loc : new Uri(uri, loc);
-                if (next.Scheme != Uri.UriSchemeHttps || !Allowed(next.ToString(), out _)) return (res.StatusCode, "", uri);
+                if (next.Scheme != Uri.UriSchemeHttps || !Allowed(next.ToString(), out _)) return (res.StatusCode, "", uri, null);
                 uri = next;
                 continue;
             }
-            if (!res.IsSuccessStatusCode) return (res.StatusCode, "", uri);
-            if (res.Content.Headers.ContentLength > maxBytes) return (HttpStatusCode.RequestEntityTooLarge, "", uri);
+            if (!res.IsSuccessStatusCode)
+            {
+                var retry = res.Headers.RetryAfter?.Delta ?? (res.Headers.RetryAfter?.Date is { } d ? d - DateTimeOffset.UtcNow : null);
+                return (res.StatusCode, "", uri, retry is { } t && t > TimeSpan.Zero ? TimeSpan.FromSeconds(Math.Min(t.TotalSeconds, 120)) : null);
+            }
+            if (res.Content.Headers.ContentLength > maxBytes) return (HttpStatusCode.RequestEntityTooLarge, "", uri, null);
             await using var s = await res.Content.ReadAsStreamAsync(ct);
             using var ms = new MemoryStream();
             var buffer = new byte[81920];
             int read;
             while ((read = await s.ReadAsync(buffer, ct)) > 0)
             {
-                if (ms.Length + read > maxBytes) return (HttpStatusCode.RequestEntityTooLarge, "", uri);
+                if (ms.Length + read > maxBytes) return (HttpStatusCode.RequestEntityTooLarge, "", uri, null);
                 ms.Write(buffer, 0, read);
             }
-            return (res.StatusCode, Encoding.UTF8.GetString(ms.ToArray()), uri);
+            return (res.StatusCode, Encoding.UTF8.GetString(ms.ToArray()), uri, null);
         }
-        return (HttpStatusCode.LoopDetected, "", uri);
+        return (HttpStatusCode.LoopDetected, "", uri, null);
     }
 
     /// <summary>Stable document id per page URL, so re-crawls create versions instead of duplicates.</summary>

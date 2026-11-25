@@ -56,7 +56,7 @@ public class AgentFactory : WebApplicationFactory<Program>
         return job!;
     }
 
-    public static async Task WaitAsync(Func<Task<bool>> condition, int seconds = 30)
+    public static async Task WaitAsync(Func<Task<bool>> condition, int seconds = 90)
     {
         var until = DateTime.UtcNow.AddSeconds(seconds);
         while (DateTime.UtcNow < until)

@@ -31,11 +31,13 @@ public sealed class FakeSite : HttpMessageHandler
                   <url><loc>https://docs.example.com/private/secret/</loc></url>
                   <url><loc>https://docs.example.com/lp/campaign/</loc></url>
                   <url><loc>https://docs.example.com/products/moved/</loc></url>
+                  <url><loc>https://docs.example.com/products/slow/</loc><lastmod>2020-01-01</lastmod></url>
                   <url><loc>https://evil.example.net/products/x/</loc></url>
                 </urlset>
                 """, "application/xml"),
             "/products/planner/" => Count(Ok($"<html><head><title>Capacity Planner</title></head><body><nav>Menu Home About</nav><main><h1>Capacity Planner</h1><p>{PlannerVersion} The capacity planner balances demand and capacity by role.</p></main><footer>Copyright</footer></body></html>")),
             "/products/board/" => Count(Ok("<html><head><title>Kanban Board</title></head><body><main><h1>Kanban Board</h1><p>Kanban boards with WIP limits for agile teams of every size.</p></main></body></html>")),
+            "/products/slow/" => throw new TaskCanceledException("Simulated timeout", new TimeoutException()),
             "/products/moved/" => Count(new HttpResponseMessage(HttpStatusCode.MovedPermanently) { Headers = { Location = new Uri("https://evil.example.net/landing") } }),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),
         });
@@ -70,10 +72,10 @@ public class CrawlerTests(CrawlFactory factory) : IClassFixture<CrawlFactory>
         cfg.EnsureSuccessStatusCode();
 
         var first = await RunCrawl(c);
-        Assert.Equal("PartiallySucceeded", first["state"]!.GetValue<string>()); // the off-site redirect is refused
-        Assert.Equal(3, first["items"]!.GetValue<int>());                       // planner, board, moved (private = robots, lp = excluded, evil = host)
+        Assert.Equal("PartiallySucceeded", first["state"]!.GetValue<string>()); // off-site redirect refused, slow page timed out
+        Assert.Equal(4, first["items"]!.GetValue<int>());                       // planner, board, moved, slow (private = robots, lp = excluded, evil = host)
         Assert.Equal(2, first["created"]!.GetValue<int>());
-        Assert.Equal(1, first["failed"]!.GetValue<int>());
+        Assert.Equal(2, first["failed"]!.GetValue<int>());                      // a timeout fails the page, never the crawl
 
         var answer = await (await c.PostAsJsonAsync("/api/chat", new { message = "capacity planner demand by role", knowledgeBase = "docs" })).Content.ReadFromJsonAsync<JsonObject>();
         var text = answer!["answer"]!.GetValue<string>();
@@ -84,6 +86,9 @@ public class CrawlerTests(CrawlFactory factory) : IClassFixture<CrawlFactory>
         var second = await RunCrawl(c);
         Assert.Equal(2, second["unchanged"]!.GetValue<int>());                  // sitemap lastmod older than our copy: not fetched again
         Assert.Equal(requestsBefore + 1, factory.Site.PageRequests);             // only the page without lastmod was requested
+
+        var forced = await RunCrawl(c, force: true);
+        Assert.Equal(2, forced["updated"]!.GetValue<int>());                    // force re-processes even identical pages
     }
 
     [Fact]
@@ -99,9 +104,9 @@ public class CrawlerTests(CrawlFactory factory) : IClassFixture<CrawlFactory>
         Assert.Equal(HttpStatusCode.NotFound, (await c.PostAsync($"/api/jobs/{Guid.NewGuid()}/cancel", null)).StatusCode);
     }
 
-    private static async Task<JsonObject> RunCrawl(HttpClient c)
+    private static async Task<JsonObject> RunCrawl(HttpClient c, bool force = false)
     {
-        var res = await c.PostAsJsonAsync("/api/knowledge-bases/docs/crawl", new { });
+        var res = await c.PostAsJsonAsync("/api/knowledge-bases/docs/crawl", new { force });
         Assert.Equal(HttpStatusCode.Accepted, res.StatusCode);
         return await AgentFactory.WaitForJobAsync(c, (await res.Content.ReadFromJsonAsync<JsonObject>())!["id"]!.GetValue<string>());
     }
