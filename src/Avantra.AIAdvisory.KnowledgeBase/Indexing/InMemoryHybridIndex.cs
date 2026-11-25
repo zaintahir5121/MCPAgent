@@ -22,7 +22,10 @@ public sealed partial class InMemoryHybridIndex(IServiceProvider services, ILogg
     [GeneratedRegex(@"[a-z0-9]+")]
     private static partial Regex Token();
 
-    private static readonly HashSet<string> Stop = ["the", "and", "or", "a", "an", "of", "to", "in", "for", "with", "on", "is", "are", "be", "by", "as", "it", "that", "this", "we", "our", "from", "at", "can", "which", "what"];
+    private static readonly HashSet<string> Stop = ["the", "and", "or", "a", "an", "of", "to", "in", "for", "with", "on", "is", "are", "be", "by", "as", "it", "that", "this",
+        "we", "our", "from", "at", "can", "which", "what", "how", "do", "does", "doe", "did", "who", "why", "when", "where", "about", "tell", "me", "please", "us", "you", "your",
+        "i", "my", "have", "has", "need", "want", "would", "should", "could", "there", "their", "they", "them", "its", "into", "also", "any", "all", "not", "no", "yes", "more",
+        "some", "will", "was", "were", "been", "get", "give", "use", "using", "used", "if", "so", "than", "then", "there", "these", "those"];
 
     public Task IndexAsync(KnowledgeDocument document, CancellationToken ct)
     {
@@ -80,10 +83,18 @@ public sealed partial class InMemoryHybridIndex(IServiceProvider services, ILogg
         Fuse(bm25);
         if (vector is not null) Fuse(vector);
 
-        // Normalise to 0..1 relative to a perfect rank-1 hit in every ranking; source trust only breaks near-ties.
+        // Normalise to 0..1 relative to a perfect rank-1 hit in every ranking, then scale by how much of the question the
+        // passage actually matches (lexical term coverage, or semantic similarity when vectors exist). That keeps scores
+        // comparable across separate indexes and lets callers drop weak matches. Source trust only breaks near-ties.
         var maxPossible = (vector is null ? 1 : 2) * (1.0 / (RrfK + 1));
+        var cosine = vector?.ToDictionary(v => v.Item1.Chunk.Id, v => v.Item2) ?? [];
+        double Relevance(Entry e)
+        {
+            var coverage = qTokens.Count == 0 ? 0 : qTokens.Count(t => e.Tf.ContainsKey(t)) / (double)qTokens.Count;
+            return Math.Max(coverage, cosine.GetValueOrDefault(e.Chunk.Id));
+        }
         return fused.Values
-            .Select(x => (x.Entry, Score: x.Score / maxPossible * (0.99 + 0.0025 * (int)x.Entry.Document.Trust)))
+            .Select(x => (x.Entry, Score: x.Score / maxPossible * Relevance(x.Entry) * (0.99 + 0.0025 * (int)x.Entry.Document.Trust)))
             .OrderByDescending(x => x.Score)
             .Take(query.Top)
             .Select(x => new KnowledgeHit(x.Entry.Chunk.Id, x.Entry.Document.Id, x.Entry.Document.VendorCode, x.Entry.Document.Title,

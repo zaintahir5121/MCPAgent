@@ -38,6 +38,15 @@ public sealed class EfKnowledgeStore(AdvisoryDbContext db) : IKnowledgeStore
 
     public async Task<IReadOnlyList<KnowledgeDocument>> ListPublishedWithChunksAsync(CancellationToken ct) =>
         await db.Documents.AsNoTracking().Include(d => d.Chunks).Where(d => d.Status == DocumentStatus.Published).ToListAsync(ct);
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var doc = await db.Documents.FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (doc is null) return false;
+        db.Documents.Remove(doc);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
 }
 
 /// <summary>Tenant-scoped session store: a session is only ever loaded with the caller's tenant id.</summary>

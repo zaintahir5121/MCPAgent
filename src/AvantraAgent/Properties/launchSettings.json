@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Avantra.AdvisoryAgent": {
+    "AvantraAgent": {
       "commandName": "Project",
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5090",

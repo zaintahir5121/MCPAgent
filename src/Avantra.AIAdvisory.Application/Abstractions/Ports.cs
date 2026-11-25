@@ -36,6 +36,7 @@ public interface IKnowledgeStore
     Task UpdateAsync(KnowledgeDocument document, CancellationToken ct);
     Task<IReadOnlyList<KnowledgeDocument>> ListAsync(string? vendorCode, DocumentStatus? status, CancellationToken ct);
     Task<IReadOnlyList<KnowledgeDocument>> ListPublishedWithChunksAsync(CancellationToken ct);
+    Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 }
 
 /// <summary>Turns free text into a structured requirement profile.</summary>
@@ -78,6 +79,21 @@ public interface IAiProviderInfo
     bool ChatEnabled { get; }
     bool EmbeddingsEnabled { get; }
     string? ChatModel { get; }
+}
+
+/// <summary>Knowledge bases known to the system (from vendor packs and/or created at runtime). Reads are cached and synchronous.</summary>
+public interface IKnowledgeBaseRegistry
+{
+    IReadOnlyList<KnowledgeBaseDefinition> All { get; }
+    KnowledgeBaseDefinition? Get(string code);
+}
+
+/// <summary>Default registry: one knowledge base per loaded vendor pack (used by hosts without a database registry).</summary>
+public sealed class PackKnowledgeBaseRegistry(ICatalogueRepository catalogue) : IKnowledgeBaseRegistry
+{
+    public IReadOnlyList<KnowledgeBaseDefinition> All => catalogue.GetVendors()
+        .Select(v => new KnowledgeBaseDefinition { Code = v.Code, Name = v.Name, Description = v.Description, IndexName = $"{v.Code}-index" }).ToList();
+    public KnowledgeBaseDefinition? Get(string code) => All.FirstOrDefault(k => string.Equals(k.Code, code, StringComparison.OrdinalIgnoreCase));
 }
 
 public static class Roles

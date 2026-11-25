@@ -27,9 +27,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avantra.AIAdvisory.Integrat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avantra.AIAdvisory.UnitTests", "tests\Avantra.AIAdvisory.UnitTests\Avantra.AIAdvisory.UnitTests.csproj", "{D9175C16-BB78-46A8-ADEC-A142EBF64285}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avantra.AdvisoryAgent", "src\Avantra.AdvisoryAgent\Avantra.AdvisoryAgent.csproj", "{138F8649-B87D-4B59-8B52-B2F55C618F00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvantraAgent", "src\AvantraAgent\AvantraAgent.csproj", "{138F8649-B87D-4B59-8B52-B2F55C618F00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avantra.AdvisoryAgent.Tests", "tests\Avantra.AdvisoryAgent.Tests\Avantra.AdvisoryAgent.Tests.csproj", "{4A796B02-5C8D-40FB-AD7E-3827FA98F4CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvantraAgent.Tests", "tests\AvantraAgent.Tests\AvantraAgent.Tests.csproj", "{4A796B02-5C8D-40FB-AD7E-3827FA98F4CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

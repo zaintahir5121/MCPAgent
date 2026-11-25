@@ -78,8 +78,10 @@ public static class DependencyInjection
     {
         using var scope = sp.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdvisoryDbContext>();
-        // MVP: EnsureCreated. Production: EF Core migrations applied by the deployment pipeline (see docs/07).
-        await db.Database.EnsureCreatedAsync(ct);
+        // SQL Server / Azure SQL (production): apply EF Core migrations (Persistence/Migrations).
+        // SQLite (local development): create the schema directly; delete the .db file after schema changes.
+        if (db.Database.IsSqlServer()) await db.Database.MigrateAsync(ct);
+        else await db.Database.EnsureCreatedAsync(ct);
         scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Database")
             .LogInformation("Database ready ({Provider})", db.Database.ProviderName);
     }

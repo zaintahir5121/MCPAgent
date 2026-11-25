@@ -15,6 +15,8 @@ public sealed class AdvisoryDbContext(DbContextOptions<AdvisoryDbContext> option
     public DbSet<KnowledgeChunk> Chunks => Set<KnowledgeChunk>();
     public DbSet<AdvisorySession> Sessions => Set<AdvisorySession>();
     public DbSet<AuditEntry> Audit => Set<AuditEntry>();
+    public DbSet<KnowledgeBaseDefinition> KnowledgeBases => Set<KnowledgeBaseDefinition>();
+    public DbSet<IngestionJobRecord> IngestionJobs => Set<IngestionJobRecord>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -66,6 +68,31 @@ public sealed class AdvisoryDbContext(DbContextOptions<AdvisoryDbContext> option
             e.HasKey(x => x.Id);
             e.Property(x => x.Action).HasMaxLength(100);
             e.HasIndex(x => new { x.TenantId, x.At });
+        });
+
+        b.Entity<KnowledgeBaseDefinition>(e =>
+        {
+            e.ToTable("KnowledgeBases");
+            e.HasKey(x => x.Code);
+            e.Property(x => x.Code).HasMaxLength(50);
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(2000);
+            e.Property(x => x.IndexName).HasMaxLength(128).IsRequired();
+            e.Property(x => x.SourceFolder).HasMaxLength(1000);
+            e.HasIndex(x => x.IndexName).IsUnique();
+        });
+
+        b.Entity<IngestionJobRecord>(e =>
+        {
+            e.ToTable("IngestionJobs");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.KnowledgeBaseCode).HasMaxLength(50);
+            e.Property(x => x.Kind).HasMaxLength(30);
+            e.Property(x => x.Trigger).HasMaxLength(30);
+            e.Property(x => x.State).HasConversion<string>().HasMaxLength(30);
+            e.Property(x => x.RequestedBy).HasMaxLength(200);
+            e.Property(x => x.Error).HasMaxLength(4000);
+            e.HasIndex(x => new { x.KnowledgeBaseCode, x.QueuedAt });
         });
 
         if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")

@@ -40,6 +40,7 @@ public sealed class IngestionService(
     IKnowledgeStore store,
     IKnowledgeIndex index,
     ICatalogueRepository catalogue,
+    IKnowledgeBaseRegistry registry,
     IAuditLog audit,
     IUserContext user,
     IServiceProvider services,
@@ -47,14 +48,16 @@ public sealed class IngestionService(
 {
     public async Task<IngestionResult> IngestAsync(IngestionRequest request, CancellationToken ct)
     {
-        var pack = catalogue.GetPack(request.VendorCode) ?? throw new UnknownVendorException(request.VendorCode);
+        // A knowledge base needs no vendor pack; when one exists, chunks are also tagged with its products and capabilities.
+        var pack = catalogue.GetPack(request.VendorCode);
+        var kbCode = pack?.Vendor.Code ?? registry.Get(request.VendorCode)?.Code ?? throw new UnknownVendorException(request.VendorCode);
         using var buffer = new MemoryStream();
         await request.Content.CopyToAsync(buffer, ct);
         var bytes = buffer.ToArray();
         var hash = Convert.ToHexString(SHA256.HashData(bytes));
         var externalId = request.ExternalId ?? Path.GetFileNameWithoutExtension(request.FileName).ToLowerInvariant();
 
-        var existing = await store.FindByExternalIdAsync(pack.Vendor.Code, externalId, ct);
+        var existing = await store.FindByExternalIdAsync(kbCode, externalId, ct);
         if (existing is not null && existing.ContentHash == hash)
             return new IngestionResult(existing.Id, externalId, existing.Version, IngestionOutcome.Unchanged, existing.Status, existing.Chunks.Count, "Content unchanged.");
 
@@ -67,7 +70,7 @@ public sealed class IngestionService(
         var doc = new KnowledgeDocument
         {
             ExternalId = externalId,
-            VendorCode = pack.Vendor.Code,
+            VendorCode = kbCode,
             Title = request.Title ?? parsed.Title ?? request.FileName,
             SourceUrl = request.SourceUrl ?? (meta.GetValueOrDefault("source_url") is { Length: > 0 } u ? u : null),
             ContentType = request.ContentType ?? Path.GetExtension(request.FileName),
@@ -84,7 +87,7 @@ public sealed class IngestionService(
         var ordinal = 0;
         foreach (var (section, text) in Chunker.Chunk(parsed))
         {
-            var (products, caps) = KnowledgeClassifier.Classify(text, pack, docProducts);
+            var (products, caps) = pack is null ? (docProducts.ToList(), new List<string>()) : KnowledgeClassifier.Classify(text, pack, docProducts);
             doc.Chunks.Add(new KnowledgeChunk { DocumentId = doc.Id, Ordinal = ordinal++, Section = section, Content = text, ProductCodes = products, CapabilityCodes = caps });
         }
 

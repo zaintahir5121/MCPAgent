@@ -11,7 +11,7 @@
     <PackageReference Include="ModelContextProtocol" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Avantra.AdvisoryAgent\Avantra.AdvisoryAgent.csproj" />
+    <ProjectReference Include="..\..\src\AvantraAgent\AvantraAgent.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

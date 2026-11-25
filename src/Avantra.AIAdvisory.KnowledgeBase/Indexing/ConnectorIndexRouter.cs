@@ -27,13 +27,15 @@ public sealed class ConnectorIndexOptions
 /// One separate knowledge index per connector (planview-index, salesforce-index, outsystems-index).
 /// Every read and write is routed by vendor code, so connectors never share or mix an index.
 /// </summary>
-public sealed class ConnectorIndexRouter(IOptions<ConnectorIndexOptions> options, IServiceProvider services, ILoggerFactory loggers) : IKnowledgeIndex
+public sealed class ConnectorIndexRouter(IOptions<ConnectorIndexOptions> options, IServiceProvider services, ILoggerFactory loggers, IKnowledgeBaseRegistry? registry = null) : IKnowledgeIndex
 {
     private readonly ConcurrentDictionary<string, IKnowledgeIndex> _indexes = new(StringComparer.OrdinalIgnoreCase);
 
     public bool IsPersistent => string.Equals(options.Value.Provider, "AzureAiSearch", StringComparison.OrdinalIgnoreCase);
 
-    public string IndexNameFor(string vendorCode) => options.Value.IndexNameFor(vendorCode);
+    /// <summary>Index name: the knowledge base's own setting first, then configuration, then "{code}-index".</summary>
+    public string IndexNameFor(string vendorCode) =>
+        registry?.Get(vendorCode)?.IndexName is { Length: > 0 } n ? n : options.Value.IndexNameFor(vendorCode);
 
     public IKnowledgeIndex For(string vendorCode) => _indexes.GetOrAdd(vendorCode, v =>
     {
@@ -41,12 +43,15 @@ public sealed class ConnectorIndexRouter(IOptions<ConnectorIndexOptions> options
         if (!IsPersistent) return new InMemoryHybridIndex(services, loggers.CreateLogger<InMemoryHybridIndex>());
         return new AzureAiSearchIndex(Options.Create(new AzureAiSearchOptions
         {
-            Endpoint = o.Endpoint, ApiKey = o.ApiKey, IndexName = o.IndexNameFor(v),
+            Endpoint = o.Endpoint, ApiKey = o.ApiKey, IndexName = IndexNameFor(v),
             VectorDimensions = o.VectorDimensions, UseSemanticRanker = o.UseSemanticRanker,
         }), services, loggers.CreateLogger<AzureAiSearchIndex>());
     });
 
     public Task IndexAsync(KnowledgeDocument document, CancellationToken ct) => For(document.VendorCode).IndexAsync(document, ct);
+
+    /// <summary>Forget the cached index client (e.g. after a knowledge base is deleted).</summary>
+    public void Evict(string vendorCode) => _indexes.TryRemove(vendorCode, out _);
 
     public async Task RemoveAsync(Guid documentId, CancellationToken ct)
     {

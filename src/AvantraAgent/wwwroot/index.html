@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AvantraAgent</title>
+<style>
+  :root { --brand:#0b3d91; --brand2:#1565c0; --bg:#f4f6fa; --card:#fff; --text:#1b1f24; --muted:#5b6472; --line:#dde3ec; --me:#e8f0fe; --ok:#0f7b3f; --warn:#a15c00; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html, body { height:100%; margin:0; }
+  body { font-family:"Segoe UI", system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; }
+  header { background:var(--brand); color:#fff; padding:.6rem 1rem; display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; }
+  header h1 { font-size:1.1rem; margin:0; font-weight:600; }
+  header .status { font-size:.8rem; opacity:.9; flex:1; min-width:160px; }
+  header select, header button { font:inherit; font-size:.85rem; border-radius:6px; border:none; padding:.4rem .6rem; }
+  header button { background:#fff; color:var(--brand); cursor:pointer; }
+  .layout { flex:1; display:flex; min-height:0; }
+  main { flex:1; overflow-y:auto; padding:1rem; }
+  .wrap { max-width:860px; margin:0 auto; }
+  .msg { margin:.6rem 0; display:flex; }
+  .msg .bubble { padding:.7rem .9rem; border-radius:12px; max-width:100%; line-height:1.45; overflow-x:auto; }
+  .msg.me { justify-content:flex-end; } .msg.me .bubble { background:var(--me); max-width:80%; white-space:pre-wrap; }
+  .msg.bot .bubble { background:var(--card); border:1px solid var(--line); width:100%; }
+  .msg.sys .bubble { background:#fff7e6; border:1px solid #f3d9a4; font-size:.88rem; width:100%; }
+  .bubble h3 { margin:.1rem 0 .4rem; color:var(--brand); font-size:1.05rem; }
+  .bubble p { margin:.35rem 0; } .bubble ul, .bubble ol { margin:.3rem 0; padding-left:1.3rem; }
+  .bubble table { border-collapse:collapse; font-size:.88rem; margin:.4rem 0; }
+  .bubble th, .bubble td { border:1px solid var(--line); padding:.3rem .5rem; text-align:left; } .bubble th { background:#f3f6fb; }
+  .meta { font-size:.72rem; color:var(--muted); margin-top:.35rem; }
+  .chips { display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem 0 .2rem; }
+  .chips button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:.35rem .75rem; font:inherit; font-size:.85rem; cursor:pointer; color:var(--brand2); text-align:left; }
+  footer { background:#fff; border-top:1px solid var(--line); padding:.7rem 1rem; }
+  form.chat { max-width:860px; margin:0 auto; display:flex; gap:.5rem; }
+  textarea { flex:1; resize:none; font:inherit; padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; min-height:46px; max-height:160px; }
+  .btn { background:var(--brand2); color:#fff; border:none; border-radius:8px; padding:.5rem 1rem; font:inherit; cursor:pointer; }
+  .btn:disabled { opacity:.5; cursor:default; } .btn.light { background:#fff; color:var(--brand2); border:1px solid var(--line); }
+  .hint { max-width:860px; margin:.35rem auto 0; font-size:.75rem; color:var(--muted); }
+  aside { width:400px; max-width:100%; background:#fff; border-left:1px solid var(--line); overflow-y:auto; padding:1rem; display:none; }
+  aside.open { display:block; }
+  aside h2 { font-size:1rem; margin:.2rem 0 .8rem; color:var(--brand); }
+  .kb { border:1px solid var(--line); border-radius:10px; padding:.7rem; margin-bottom:.7rem; font-size:.88rem; }
+  .kb .top { display:flex; justify-content:space-between; gap:.5rem; align-items:baseline; }
+  .kb .code { color:var(--muted); font-size:.78rem; }
+  .kb .row { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.5rem; }
+  .kb .row .btn { padding:.3rem .6rem; font-size:.8rem; }
+  .badge { display:inline-block; font-size:.72rem; padding:.05rem .45rem; border-radius:999px; background:#eef2f7; color:var(--muted); margin-right:.25rem; }
+  .badge.ok { background:#e7f6ee; color:var(--ok); } .badge.warn { background:#fff4e5; color:var(--warn); }
+  .field { display:flex; flex-direction:column; gap:.2rem; margin-bottom:.5rem; font-size:.82rem; color:var(--muted); }
+  .field input { font:inherit; font-size:.88rem; padding:.45rem .55rem; border:1px solid var(--line); border-radius:6px; color:var(--text); }
+  details { border:1px solid var(--line); border-radius:10px; padding:.6rem .7rem; margin-bottom:.8rem; }
+  details summary { cursor:pointer; font-weight:600; color:var(--brand2); font-size:.9rem; }
+  .jobs { font-size:.8rem; color:var(--muted); }
+  .jobs div { padding:.25rem 0; border-bottom:1px dashed var(--line); }
+  @media (max-width: 760px) { aside { width:100%; border-left:none; } .layout.panel-open main { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>AvantraAgent</h1>
+  <select id="kbSelect" title="Knowledge base to use"><option value="all">All knowledge bases</option></select>
+  <div class="status" id="status">Connecting…</div>
+  <button id="toggleKb">Knowledge</button>
+  <button id="newchat">New chat</button>
+</header>
+<div class="layout">
+  <main id="main"><div class="wrap" id="log">
+    <div class="msg bot"><div class="bubble">
+      <h3>Hi — I'm AvantraAgent.</h3>
+      <p>Ask anything in the knowledge bases, or describe your organisation and needs to get product recommendations with sources. Use <b>Knowledge</b> (top right) to add knowledge bases and documents.</p>
+      <div class="chips" id="chips">
+        <button>We have 2,000 employees, 150 project managers and 40 portfolio managers. We need portfolio management, strategic planning, resource management and financial planning. Which Planview products do we need?</button>
+        <button>What does Planview AgilePlace do?</button>
+        <button>Compare Planview Portfolios vs AdaptiveWork vs PPM Pro</button>
+      </div>
+    </div></div>
+  </div></main>
+  <aside id="panel">
+    <h2>Knowledge bases</h2>
+    <div class="field" id="adminKeyField" hidden><label for="adminKey">Admin key (required by this server)</label><input id="adminKey" type="password" autocomplete="off"></div>
+    <div id="kbList"></div>
+    <details>
+      <summary>+ New knowledge base</summary>
+      <form id="kbForm">
+        <div class="field"><label>Code (e.g. salesforce)</label><input name="code" required pattern="[a-z][a-z0-9\-]{1,48}[a-z0-9]" placeholder="salesforce"></div>
+        <div class="field"><label>Name</label><input name="name" required placeholder="Salesforce"></div>
+        <div class="field"><label>Description</label><input name="description" placeholder="CRM clouds, editions and licensing"></div>
+        <div class="field"><label>Source folder to sync (optional)</label><input name="sourceFolder" placeholder="knowledge/vendors/salesforce/documents"></div>
+        <div class="field"><label>Sync every N hours (0 = off)</label><input name="syncIntervalHours" type="number" min="0" value="0"></div>
+        <button class="btn" type="submit">Create</button>
+      </form>
+    </details>
+    <h2>Recent jobs</h2>
+    <div class="jobs" id="jobs">No jobs yet.</div>
+    <input type="file" id="filePicker" multiple accept=".pdf,.docx,.html,.htm,.md,.markdown,.txt" hidden>
+  </aside>
+</div>
+<footer>
+  <form class="chat" id="form">
+    <textarea id="input" rows="1" placeholder="Ask anything, or describe your needs…" maxlength="4000"></textarea>
+    <button class="btn" id="send" type="submit">Send</button>
+  </form>
+  <div class="hint">Enter to send · Shift+Enter for a new line · Prices and licence tiers are never invented — they are confirmed with the vendor.</div>
+</footer>
+<script>
+const $ = id => document.getElementById(id);
+const store = { get: k => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
+let chatId = store.get('avantraChatId');
+let uploadTarget = null;
+const recentJobs = new Map();
+
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*/g,'$1<i>$2</i>').replace(/(^|\s)_(.+?)_(?=\s|$|[.,;:])/g,'$1<i>$2</i>');
+function md(text) {
+  const lines = text.replace(/\r/g,'').split('\n'); let html = '', list = null, table = [];
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  const flushTable = () => {
+    if (!table.length) return;
+    const rows = table.filter(r => !/^\|\s*-+/.test(r)).map(r => r.trim().replace(/^\||\|$/g,'').split('|').map(c => c.trim()));
+    html += '<table>' + rows.map((r,i) => '<tr>' + r.map(c => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join('') + '</tr>').join('') + '</table>';
+    table = [];
+  };
+  for (const line of lines) {
+    if (/^\s*\|/.test(line)) { closeList(); table.push(line); continue; } else flushTable();
+    let m;
+    if ((m = line.match(/^#{1,4}\s+(.*)/))) { closeList(); html += `<h3>${inline(m[1])}</h3>`; }
+    else if ((m = line.match(/^\s*[-*]\s+(.*)/))) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; }
+    else if ((m = line.match(/^\s*\d+\.\s+(.*)/))) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; }
+    else if (line.trim() === '') closeList();
+    else { closeList(); html += `<p>${inline(line)}</p>`; }
+  }
+  closeList(); flushTable(); return html;
+}
+
+function add(role, content, meta) {
+  const div = document.createElement('div'); div.className = 'msg ' + role;
+  const b = document.createElement('div'); b.className = 'bubble';
+  if (role === 'me') b.textContent = content; else if (role === 'bot') b.innerHTML = md(content); else b.textContent = content;
+  if (meta) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = meta; b.appendChild(m); }
+  div.appendChild(b); $('log').appendChild(div); $('main').scrollTop = $('main').scrollHeight; return div;
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  const key = $('adminKey').value; if (key) headers['X-Admin-Key'] = key;
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  const text = await res.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = { title: text }; }
+  if (!res.ok) throw new Error((data && (data.detail || data.title)) || `HTTP ${res.status}`);
+  return data;
+}
+
+async function send(text) {
+  text = text.trim(); if (!text) return;
+  add('me', text); $('input').value = ''; $('send').disabled = true;
+  const wait = add('bot', '_Thinking…_');
+  try {
+    const data = await api('api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text, chatId, knowledgeBase: $('kbSelect').value }) });
+    wait.remove(); chatId = data.chatId; store.set('avantraChatId', chatId);
+    add('bot', data.answer, `mode: ${data.mode} · knowledge: ${data.knowledgeBase}`);
+  } catch (e) { wait.remove(); add('sys', e.message); }
+  finally { $('send').disabled = false; $('input').focus(); }
+}
+
+function renderKbs(kbs) {
+  const sel = $('kbSelect'), current = sel.value || store.get('avantraKb') || 'all';
+  sel.innerHTML = '<option value="all">All knowledge bases</option>' + kbs.filter(k => k.isEnabled).map(k => `<option value="${esc(k.code)}">${esc(k.name)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === current) ? current : 'all';
+  $('kbList').innerHTML = kbs.map(k => `
+    <div class="kb">
+      <div class="top"><b>${esc(k.name)}</b><span class="code">${esc(k.code)} · ${esc(k.indexName)}</span></div>
+      <div>${esc(k.description || '')}</div>
+      <div style="margin-top:.35rem">
+        <span class="badge ok">${k.publishedDocuments} document${k.publishedDocuments === 1 ? '' : 's'}</span>
+        ${k.pendingReview ? `<span class="badge warn">${k.pendingReview} waiting review</span>` : ''}
+        ${k.quarantined ? `<span class="badge warn">${k.quarantined} quarantined</span>` : ''}
+        ${k.advisoryEnabled ? '<span class="badge">product advisory</span>' : '<span class="badge">search</span>'}
+        ${k.isEnabled ? '' : '<span class="badge warn">disabled</span>'}
+      </div>
+      <div class="code" style="margin-top:.3rem">${k.sourceFolder ? `Folder: ${esc(k.sourceFolder)}${k.syncIntervalHours ? ` · every ${k.syncIntervalHours} h` : ''}` : 'No source folder'}${k.lastSyncedAt ? ` · last sync ${new Date(k.lastSyncedAt).toLocaleString()}` : ''}</div>
+      <div class="row">
+        <button class="btn light" data-act="upload" data-kb="${esc(k.code)}">Upload files</button>
+        <button class="btn light" data-act="url" data-kb="${esc(k.code)}">Add from URL</button>
+        ${k.sourceFolder ? `<button class="btn light" data-act="sync" data-kb="${esc(k.code)}">Sync now</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function refresh() {
+  try {
+    const s = await api('api/status');
+    $('adminKeyField').hidden = !s.adminKeyRequired;
+    const docs = s.knowledgeBases.reduce((n, k) => n + k.publishedDocuments, 0);
+    $('status').textContent = `${s.mode} · ${s.knowledgeBases.length} knowledge base(s) · ${docs} documents${s.ready ? '' : ' · loading…'}`;
+    renderKbs(s.knowledgeBases);
+  } catch (e) { $('status').textContent = 'Service not reachable'; }
+}
+
+function renderJobs() {
+  const jobs = [...recentJobs.values()].sort((a, b) => b.queuedAt.localeCompare(a.queuedAt)).slice(0, 8);
+  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<div><b>${esc(j.knowledgeBase)}</b> · ${esc(j.kind)} · <b>${esc(j.state)}</b> · ${j.items} item(s): ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} review, ${j.quarantined} quarantined, ${j.failed} failed${j.error ? ' · ' + esc(j.error) : ''}</div>`).join('') : 'No jobs yet.';
+}
+
+async function track(job) {
+  recentJobs.set(job.id, job); renderJobs();
+  for (let i = 0; i < 120; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    try { const j = await api(`api/jobs/${job.id}`); recentJobs.set(j.id, j); renderJobs();
+      if (!['Queued','Running'].includes(j.state)) { add('sys', `Ingestion into "${j.knowledgeBase}" ${j.state.toLowerCase()}: ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} waiting review, ${j.quarantined} quarantined, ${j.failed} failed.`); refresh(); return; }
+    } catch { }
+  }
+}
+
+$('kbList').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const kb = b.dataset.kb;
+  try {
+    if (b.dataset.act === 'upload') { uploadTarget = kb; $('filePicker').value = ''; $('filePicker').click(); }
+    if (b.dataset.act === 'sync') track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/sync`, { method:'POST' }));
+    if (b.dataset.act === 'url') {
+      const url = prompt('https:// URL of the document (the host must be allowed by the server):'); if (!url) return;
+      track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/documents/from-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }) }));
+    }
+  } catch (err) { add('sys', err.message); }
+});
+$('filePicker').addEventListener('change', async () => {
+  const files = [...$('filePicker').files]; if (!files.length || !uploadTarget) return;
+  const fd = new FormData(); files.forEach(f => fd.append('files', f));
+  try { track(await api(`api/knowledge-bases/${encodeURIComponent(uploadTarget)}/documents`, { method:'POST', body: fd })); }
+  catch (err) { add('sys', err.message); }
+});
+$('kbForm').addEventListener('submit', async e => {
+  e.preventDefault(); const f = new FormData(e.target);
+  const body = { code: f.get('code').trim(), name: f.get('name').trim(), description: f.get('description').trim() || null,
+                 sourceFolder: f.get('sourceFolder').trim() || null, syncIntervalHours: Number(f.get('syncIntervalHours') || 0) };
+  try { const kb = await api('api/knowledge-bases', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        add('sys', `Knowledge base "${kb.name}" created with its own index "${kb.indexName}". Upload documents to fill it.`); e.target.reset(); refresh(); }
+  catch (err) { add('sys', err.message); }
+});
+
+$('form').addEventListener('submit', e => { e.preventDefault(); send($('input').value); });
+$('input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($('input').value); } });
+$('chips').addEventListener('click', e => { if (e.target.tagName === 'BUTTON') send(e.target.textContent); });
+$('kbSelect').addEventListener('change', () => store.set('avantraKb', $('kbSelect').value));
+$('toggleKb').addEventListener('click', () => { const open = $('panel').classList.toggle('open'); document.querySelector('.layout').classList.toggle('panel-open', open); $('toggleKb').textContent = open ? 'Close knowledge' : 'Knowledge'; });
+$('newchat').addEventListener('click', () => { chatId = null; store.set('avantraChatId', null); location.reload(); });
+refresh(); setInterval(refresh, 30000);
+</script>
+</body>
+</html>

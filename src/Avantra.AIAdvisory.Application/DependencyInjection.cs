@@ -7,6 +7,7 @@ using Avantra.AIAdvisory.Application.Recommendation;
 using Avantra.AIAdvisory.Application.Reporting;
 using Avantra.AIAdvisory.Application.Requirements;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Avantra.AIAdvisory.Application;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAdvisoryApplication(this IServiceCollection services)
     {
+        services.TryAddSingleton<IKnowledgeBaseRegistry, PackKnowledgeBaseRegistry>();
         services.AddSingleton<HeuristicRequirementsExtractor>();
         services.AddSingleton<IRequirementsExtractor>(sp => sp.GetRequiredService<HeuristicRequirementsExtractor>());
         services.AddScoped<RequirementsAnalyzer>();

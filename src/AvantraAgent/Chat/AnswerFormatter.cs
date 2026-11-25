@@ -4,7 +4,9 @@ using Avantra.AIAdvisory.Application.Knowledge;
 using Avantra.AIAdvisory.Domain.Advisory;
 using Avantra.AIAdvisory.Domain.Catalogue;
 
-namespace Avantra.AdvisoryAgent.Chat;
+using AvantraAgent.Advisory;
+
+namespace AvantraAgent.Chat;
 
 /// <summary>Turns structured results into short Markdown chat answers (rendered by the chat page).</summary>
 public static class AnswerFormatter
@@ -45,33 +47,38 @@ public static class AnswerFormatter
         if (r.Licensing.Count > 0)
         {
             sb.AppendLine().AppendLine("**Licensing**");
-            sb.AppendLine("Pricing, editions and licence types are not public — confirm with Planview or an authorised partner. Quote inputs:");
+            sb.AppendLine($"Pricing, editions and licence types are not public — confirm with {pack.Vendor.Name} or an authorised partner. Quote inputs:");
             var inputs = r.Licensing.SelectMany(l => l.SizingInputs).Where(s => s.Count is not null).DistinctBy(s => s.Persona).ToList();
             sb.AppendLine(inputs.Count == 0 ? "- (none stated yet)" : string.Join("\n", inputs.Select(s => $"- {s.Persona}: {s.Count}")));
         }
 
         AppendQuestions(sb, r.Clarifications, 3);
         AppendSources(sb, r.Citations);
-        sb.AppendLine().AppendLine("_Reply with answers to refine this recommendation, or ask any Planview question._");
+        sb.AppendLine().AppendLine($"_Reply with answers to refine this recommendation, or ask any {pack.Vendor.Name} question._");
         return sb.ToString();
     }
 
-    public static string Search(KnowledgeSearchResult r, string question)
+    /// <summary>Passages must match at least about a third of the question to be used in an answer.</summary>
+    public const double MinAnswerScore = 0.3;
+
+    public static string Search(IReadOnlyList<KnowledgeHitView> results, string question, string scopeName)
     {
-        if (r.Hits.Count == 0)
-            return "I couldn't find anything about that in the Planview knowledge base, so I won't guess. Try rephrasing, or describe your organisation's needs and I'll recommend products.";
-        var hits = r.Hits.Select(h => (Hit: h, Text: Clean(h.Snippet)))
+        var hits = results.Where(h => h.Score >= MinAnswerScore).Select(h => (Hit: h, Text: Clean(h.Snippet)))
             .Where(x => x.Text.Length >= 40 && !x.Text.StartsWith("Demonstration content", StringComparison.OrdinalIgnoreCase))
             .Take(3).ToList();
         if (hits.Count == 0)
-            return "I couldn't find a clear answer to that in the Planview knowledge base, so I won't guess. Try rephrasing, or describe your organisation's needs and I'll recommend products.";
+            return $"I couldn't find a clear answer to that in {scopeName}, so I won't guess. Try rephrasing, pick another knowledge base, or describe your needs and I'll recommend products.";
+        var multi = hits.Select(h => h.Hit.KnowledgeBase).Distinct().Count() > 1;
         var sb = new StringBuilder();
-        sb.AppendLine($"Here is what the Planview knowledge base says about **{question.Trim().TrimEnd('?')}**:").AppendLine();
+        sb.AppendLine($"Here is what I found in {scopeName} about **{question.Trim().TrimEnd('?')}**:").AppendLine();
         for (var i = 0; i < hits.Count; i++) sb.AppendLine($"- {hits[i].Text} [S{i + 1}]");
         sb.AppendLine().AppendLine("**Sources**");
         for (var i = 0; i < hits.Count; i++)
-            sb.AppendLine($"- [S{i + 1}] {hits[i].Hit.DocumentTitle}{(hits[i].Hit.Section is null || hits[i].Hit.Section == hits[i].Hit.DocumentTitle ? "" : $" — {hits[i].Hit.Section}")}");
-        if (r.Hits.Any(h => h.IsDemonstrationData)) sb.AppendLine().AppendLine("_Planview data in this demo is pending verification against official Planview sources._");
+        {
+            var h = hits[i].Hit;
+            sb.AppendLine($"- [S{i + 1}] {(multi ? $"{h.KnowledgeBaseName}: " : "")}{h.DocumentTitle}{(h.Section is null || h.Section == h.DocumentTitle ? "" : $" — {h.Section}")}");
+        }
+        if (hits.Any(h => h.Hit.IsDemonstrationData)) sb.AppendLine().AppendLine("_Some of this content is demonstration data pending verification against official vendor sources._");
         return sb.ToString();
     }
 
@@ -83,7 +90,7 @@ public static class AnswerFormatter
         sb.AppendLine("|---|" + string.Join("", c.ProductNames.Select(_ => "---|")));
         foreach (var row in c.Rows)
             sb.AppendLine($"| {row.CapabilityName} | " + string.Join(" | ", c.ProductCodes.Select(p => row.CoverageByProduct[p] switch { "Core" => "✔ Core", "Supported" => "~ Supported", "ViaIntegration" => "↔ Via integration", _ => "–" })) + " |");
-        sb.AppendLine().AppendLine("_– means the knowledge base has no evidence for it, not that the product lacks it. Licensing for all products must be confirmed with Planview._");
+        sb.AppendLine().AppendLine("_– means the knowledge base has no evidence for it, not that the product lacks it. Licensing must be confirmed with the vendor._");
         return sb.ToString();
     }
 

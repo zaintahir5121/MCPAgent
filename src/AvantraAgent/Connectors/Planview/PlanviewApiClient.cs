@@ -1,7 +1,8 @@
-namespace Avantra.AdvisoryAgent.Connectors.Planview;
+namespace AvantraAgent.Connectors.Planview;
 
 public sealed class PlanviewApiOptions
 {
+    public const string Section = "Connectors:Planview:Api";
     /// <summary>Base URL of the Planview API you are licensed to call (e.g. your Planview Portfolios or AdaptiveWork tenant API).</summary>
     public string? BaseUrl { get; set; }
     /// <summary>API token. Put it in user-secrets / environment / Key Vault, never in appsettings.json.</summary>
@@ -14,9 +15,9 @@ public sealed class PlanviewApiOptions
 /// Agentic live-data access to Planview: read-only GET calls under the configured base URL.
 /// Not configured → tools say so instead of guessing.
 /// </summary>
-public sealed class PlanviewApiClient(HttpClient http, Microsoft.Extensions.Options.IOptions<PlanviewConnectorOptions> options)
+public sealed class PlanviewApiClient(HttpClient http, Microsoft.Extensions.Options.IOptions<PlanviewApiOptions> options)
 {
-    private readonly PlanviewApiOptions _o = options.Value.Api;
+    private readonly PlanviewApiOptions _o = options.Value;
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_o.BaseUrl);
 

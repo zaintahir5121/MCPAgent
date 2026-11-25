@@ -1,6 +1,6 @@
 using Avantra.AIAdvisory.Application.Abstractions;
 
-namespace Avantra.AdvisoryAgent.Hosting;
+namespace AvantraAgent.Hosting;
 
 /// <summary>
 /// Access management is handled by the existing platform (API gateway / Nexa) in front of this service.

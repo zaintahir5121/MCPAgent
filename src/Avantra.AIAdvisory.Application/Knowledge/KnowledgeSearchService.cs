@@ -7,18 +7,21 @@ namespace Avantra.AIAdvisory.Application.Knowledge;
 public sealed record KnowledgeSearchResult(string Query, string VendorCode, IReadOnlyList<KnowledgeHit> Hits, string Notice);
 
 /// <summary>Vendor-isolated knowledge search used by API, MCP and the advisory pipeline.</summary>
-public sealed class KnowledgeSearchService(IKnowledgeIndex index, ICatalogueRepository catalogue)
+public sealed class KnowledgeSearchService(IKnowledgeIndex index, ICatalogueRepository catalogue, IKnowledgeBaseRegistry registry)
 {
     public async Task<KnowledgeSearchResult> SearchAsync(string vendorCode, string query, int top, string? productCode, SourceTrustLevel minTrust, CancellationToken ct)
     {
-        var pack = catalogue.GetPack(vendorCode) ?? throw new UnknownVendorException(vendorCode);
+        var pack = catalogue.GetPack(vendorCode);
+        var kb = registry.Get(vendorCode);
+        if (pack is null && kb is null) throw new UnknownVendorException(vendorCode);
+        var code = pack?.Vendor.Code ?? kb!.Code;
+        if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Query is required.");
         top = Math.Clamp(top, 1, 20);
-        var hits = await index.SearchAsync(new KnowledgeQuery(query, pack.Vendor.Code, top,
-            productCode is null ? null : [productCode], minTrust), ct);
-        var notice = hits.Any(h => h.IsDemonstrationData)
+        var hits = await index.SearchAsync(new KnowledgeQuery(query, code, top, productCode is null ? null : [productCode], minTrust), ct);
+        var notice = hits.Any(h => h.IsDemonstrationData) && pack is not null
             ? pack.Vendor.DataDisclaimer
             : hits.Count == 0 ? "No published knowledge matched the query. Do not answer from general knowledge." : "Results are from published knowledge sources; cite them.";
-        return new KnowledgeSearchResult(query, pack.Vendor.Code, hits, notice);
+        return new KnowledgeSearchResult(query, code, hits, notice);
     }
 }
 
