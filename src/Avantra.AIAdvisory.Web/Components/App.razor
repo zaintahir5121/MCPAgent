@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>Avantra AI Advisory</title>
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+    <script>
+        window.avantraDownload = (name, text) => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
+            a.download = name; a.click(); URL.revokeObjectURL(a.href);
+        };
+    </script>
+</body>
+</html>

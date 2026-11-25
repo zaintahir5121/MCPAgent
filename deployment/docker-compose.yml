@@ -1,0 +1,19 @@
+# Local container run (SQLite inside the API container, in-memory index, deterministic mode unless AI__* set).
+services:
+  api:
+    build: { context: .., dockerfile: deployment/docker/api.Dockerfile }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Advisory: "Data Source=/tmp/advisory.db"
+      AI__Endpoint: ${AI_ENDPOINT:-}
+      AI__ApiKey: ${AI_API_KEY:-}
+      AI__ChatModel: ${AI_CHAT_MODEL:-}
+      AI__EmbeddingModel: ${AI_EMBEDDING_MODEL:-}
+    ports: [ "5080:8080" ]
+  web:
+    build: { context: .., dockerfile: deployment/docker/web.Dockerfile }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      AdvisoryApi__BaseUrl: http://api:8080/
+    ports: [ "5180:8080" ]
+    depends_on: [ api ]

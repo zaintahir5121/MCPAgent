@@ -1,0 +1,239 @@
+@page "/"
+@inject AdvisoryApiClient Api
+@inject IJSRuntime JS
+
+<h1>Solution advisor</h1>
+<p class="lead">Describe the customer's organisation and needs. The advisor extracts requirements, maps them to the vendor capability model,
+    composes an evidence-backed recommendation and drafts a shareable report.</p>
+
+@if (_info is not null)
+{
+    <p class="muted">AI mode: <span class="badge @(_info.Ai.Chat ? "ok" : "neutral")">@_info.Ai.Mode</span>
+        @if (_info.Ai.Chat) { <span> · model @_info.Ai.Model</span> }</p>
+}
+
+<section class="card">
+    <div class="row">
+        <label>Vendor domain
+            <select @bind="_vendor">
+                @foreach (var v in _vendors) { <option value="@v.Code">@v.Name</option> }
+            </select>
+        </label>
+        <div class="samples">Samples:
+            @foreach (var (label, text) in Samples) { <button class="link" @onclick="() => _input = text">@label</button> }
+        </div>
+    </div>
+    <textarea rows="6" @bind="_input" @bind:event="oninput" placeholder="e.g. We are a company with 2,000 employees, 150 project managers..."></textarea>
+    <div class="actions">
+        <button class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_input))" @onclick="() => RunAsync(newSession: true)">@(_busy ? "Analysing..." : "Get recommendation")</button>
+        @if (_result is not null) { <button disabled="@_busy" @onclick="Reset">New session</button> }
+    </div>
+    @if (_error is not null) { <p class="error">@_error</p> }
+</section>
+
+@if (_result is { } r)
+{
+    <section class="card summary">
+        <div class="row between">
+            <h2>Executive summary</h2>
+            <div>
+                <span class="badge @(r.Review == ReviewStatus.Approved ? "ok" : "warn")">@(r.Review == ReviewStatus.Approved ? "Approved" : "Draft - review required")</span>
+                <span class="badge neutral">@r.ExecutiveSummarySource</span>
+            </div>
+        </div>
+        <p>@r.ExecutiveSummary</p>
+        <p class="disclaimer">@r.DataDisclaimer</p>
+    </section>
+
+    <div class="grid2">
+        <section class="card">
+            <h3>Customer context</h3>
+            <dl class="facts">
+                @Fact("Employees", r.Profile.Organization.Employees)
+                @Fact("Project managers", r.Profile.Organization.ProjectManagers)
+                @Fact("Portfolio managers", r.Profile.Organization.PortfolioManagers)
+                @Fact("Resource managers", r.Profile.Organization.ResourceManagers)
+                @Fact("Team members", r.Profile.Organization.TeamMembers)
+                @Fact("Business units", r.Profile.Organization.BusinessUnits)
+                @Fact("Methodology", r.Profile.Organization.Methodology)
+                @Fact("Deployment", r.Profile.Organization.DeploymentPreference)
+                @Fact("Existing systems", r.Profile.Organization.ExistingSystems.Count == 0 ? null : string.Join(", ", r.Profile.Organization.ExistingSystems))
+            </dl>
+            <p class="muted">Analyser: @r.Profile.AnalyzerUsed</p>
+        </section>
+        <section class="card">
+            <h3>Requirements (@r.Profile.Requirements.Count)</h3>
+            <table>
+                <thead><tr><th>ID</th><th>Capability</th><th>Priority</th><th>Origin</th></tr></thead>
+                <tbody>
+                @foreach (var q in r.Profile.Requirements)
+                {
+                    <tr title="@q.Statement"><td>@q.Id</td><td>@q.CapabilityCode</td><td><span class="prio @q.Priority">@q.Priority</span></td><td>@q.Origin</td></tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    @if (r.Clarifications.Count > 0)
+    {
+        <section class="card clar">
+            <h3>Clarification questions</h3>
+            <ul>@foreach (var c in r.Clarifications) { <li><strong>@c.Question</strong><br /><span class="muted">@c.WhyItMatters</span></li> }</ul>
+            <textarea rows="3" @bind="_followUp" @bind:event="oninput" placeholder="Answer here, e.g. 'Hybrid: PMO stage-gates plus Scrum teams in Jira; 600 team members; SaaS is fine.'"></textarea>
+            <button class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_followUp))" @onclick="() => RunAsync(newSession: false)">Refine recommendation</button>
+        </section>
+    }
+
+    <h2>Solution options</h2>
+    @foreach (var o in r.Options)
+    {
+        <section class="card option @(o.Rank == 1 ? "top" : "")">
+            <div class="row between">
+                <h3>@o.Label: @string.Join(" + ", o.ProductNames)</h3>
+                <div class="scores">
+                    <span>Must-have <strong>@Pct(o.MustHaveCoverage)</strong></span>
+                    <span>Weighted <strong>@Pct(o.WeightedCoverage)</strong></span>
+                    <span>Score <strong>@o.Score.ToString("0.000")</strong></span>
+                </div>
+            </div>
+            <table>
+                <thead><tr><th>Req</th><th>Explanation</th><th>Coverage</th><th>Evidence</th><th>Sources</th></tr></thead>
+                <tbody>
+                @foreach (var c in o.Coverage)
+                {
+                    <tr class="@(c.ProductCode is null ? "gap" : "")">
+                        <td>@c.Requirement.Id</td><td>@c.Explanation</td>
+                        <td>@(c.Coverage?.ToString() ?? "GAP")</td>
+                        <td><span class="ev @c.Evidence">@c.Evidence</span></td>
+                        <td>@string.Join(" ", c.CitationIds)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            @if (o.AppliedRules.Count > 0)
+            {
+                <p class="muted"><strong>Avantra rules (not vendor facts):</strong> @string.Join("; ", o.AppliedRules.Select(a => $"{a.Description} ({a.Adjustment:+0.00})"))</p>
+            }
+            @if (o.Rank == 1 && o.Considerations.Count > 0)
+            {
+                <details><summary>Implementation considerations</summary><ul>@foreach (var c in o.Considerations) { <li>@c</li> }</ul></details>
+            }
+        </section>
+    }
+
+    <section class="card">
+        <h3>Licensing &amp; subscription considerations</h3>
+        @foreach (var l in r.Licensing)
+        {
+            <h4>@l.ProductName @if (l.RequiresVendorConfirmation) { <span class="badge warn">Vendor confirmation required</span> }</h4>
+            <p>@l.Statement</p>
+            <table>
+                <thead><tr><th>Sizing input</th><th>Count</th><th>Basis</th></tr></thead>
+                <tbody>@foreach (var s in l.SizingInputs) { <tr><td>@s.Persona</td><td>@(s.Count?.ToString() ?? "?")</td><td>@s.Basis</td></tr> }</tbody>
+            </table>
+        }
+    </section>
+
+    <div class="grid2">
+        <section class="card">
+            <h3>Warnings &amp; assumptions</h3>
+            <ul>
+                @foreach (var w in r.Warnings) { <li><span class="badge warn">@w.Kind</span> @w.Text</li> }
+                @foreach (var a in r.Assumptions) { <li><span class="badge neutral">@a.Kind</span> @a.Text</li> }
+            </ul>
+        </section>
+        <section class="card">
+            <h3>Sources</h3>
+            <ul class="sources">
+                @foreach (var c in r.Citations)
+                {
+                    <li><strong>[@c.Id]</strong> @c.DocumentTitle @(c.Section is null ? "" : $"- {c.Section}")
+                        <span class="badge neutral">@c.Trust</span>
+                        @if (c.IsDemonstrationData) { <span class="badge warn">demo data</span> }
+                        @if (c.Url is not null) { <a href="@c.Url" target="_blank" rel="noopener">link</a> }
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+
+    <section class="card">
+        <h3>Advisory report</h3>
+        <div class="row">
+            <input placeholder="Customer name (optional)" @bind="_customer" />
+            <button @onclick="ShowReportAsync">Preview report</button>
+            <button @onclick="DownloadAsync">Download Markdown</button>
+            @if (r.Review != ReviewStatus.Approved) { <button class="approve" @onclick="ApproveAsync">Approve for sharing (reviewer)</button> }
+        </div>
+        @if (_reportHtml is not null) { <iframe class="report" srcdoc="@_reportHtml" sandbox=""></iframe> }
+    </section>
+}
+
+@code {
+    private static readonly (string Label, string Text)[] Samples =
+    [
+        ("Enterprise SPM", "We are a company with 2,000 employees, 150 project managers, 40 portfolio managers, and multiple business units. We need enterprise portfolio management, strategic planning, resource management, financial management, and project governance. Which Planview products, subscriptions, plans, and licensing tiers would you recommend?"),
+        ("Agile at scale", "We are a software company with 900 employees and 70 Scrum teams (about 600 engineers) using Jira. Leadership needs portfolio prioritisation and OKRs connected to agile delivery, plus flow metrics to understand delivery bottlenecks. SaaS only."),
+        ("Mid-size PMO", "We are a 400-person professional services firm with 25 project managers. We must have project management, resource management and timesheets. Portfolio dashboards would be nice to have. We currently use Microsoft Project and Excel."),
+    ];
+
+    private IReadOnlyList<Vendor> _vendors = [];
+    private ServiceInfo? _info;
+    private string _vendor = "planview";
+    private string? _input, _followUp, _error, _customer, _reportHtml;
+    private bool _busy;
+    private AdvisoryResult? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _info = await Api.InfoAsync();
+            _vendors = await Api.VendorsAsync();
+            if (_vendors.Count > 0) _vendor = _vendors[0].Code;
+        }
+        catch (Exception ex) { _error = $"Cannot reach the Advisory API: {ex.Message}"; }
+    }
+
+    private async Task RunAsync(bool newSession)
+    {
+        _busy = true; _error = null; _reportHtml = null;
+        try
+        {
+            var text = newSession ? _input! : _followUp!;
+            _result = await Api.RecommendAsync(_vendor, text, newSession ? null : _result?.SessionId);
+            if (!newSession) _followUp = null;
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private void Reset() { _result = null; _input = null; _reportHtml = null; }
+
+    private async Task ShowReportAsync() => _reportHtml = await Api.ReportHtmlAsync(_result!.SessionId, _customer);
+
+    private async Task DownloadAsync()
+    {
+        var md = await Api.ReportMarkdownAsync(_result!.SessionId, _customer);
+        await JS.InvokeVoidAsync("avantraDownload", $"advisory-{_result.SessionId:N}.md", md);
+    }
+
+    private async Task ApproveAsync()
+    {
+        try
+        {
+            await Api.ReviewAsync(_result!.SessionId, true, "Approved in advisory UI");
+            _result = _result with { Review = ReviewStatus.Approved };
+            if (_reportHtml is not null) await ShowReportAsync();
+        }
+        catch (Exception ex) { _error = $"Approval failed (reviewer role required): {ex.Message}"; }
+    }
+
+    private static string Pct(double v) => $"{v * 100:0}%";
+
+    private static RenderFragment Fact(string label, object? value) => __builder =>
+    {
+        <dt>@label</dt><dd class="@(value is null ? "unknown" : "")">@(value?.ToString() ?? "not stated")</dd>
+    };
+}

@@ -1,0 +1,1739 @@
+{
+  "vendor": {
+    "code": "planview",
+    "name": "Planview",
+    "description": "Planview portfolio management and work management solutions.",
+    "packVersion": "0.1.0-demo",
+    "dataDisclaimer": "DEMONSTRATION DATA: the Planview catalogue in this MVP is an Avantra summary of publicly available positioning and is pending curator verification against official Planview sources. It contains no pricing. Product capabilities, packaging and licensing must be confirmed with Planview or an authorised partner before customer use.",
+    "isDemonstrationData": true
+  },
+  "capabilities": [
+    {
+      "code": "portfolio-management",
+      "vendorCode": "planview",
+      "name": "Portfolio management",
+      "category": "Portfolio & Strategy",
+      "description": "Prioritise, select and balance investments/projects across the portfolio.",
+      "synonyms": [
+        "portfolio management",
+        "ppm",
+        "project portfolio",
+        "portfolio prioritization",
+        "portfolio prioritisation",
+        "strategic portfolio management",
+        "spm",
+        "investment planning"
+      ]
+    },
+    {
+      "code": "strategic-planning",
+      "vendorCode": "planview",
+      "name": "Strategic planning",
+      "category": "Portfolio & Strategy",
+      "description": "Translate strategy into funded initiatives; scenario and what-if planning.",
+      "synonyms": [
+        "strategic planning",
+        "strategic alignment",
+        "scenario planning",
+        "what-if",
+        "business planning",
+        "strategy execution"
+      ]
+    },
+    {
+      "code": "resource-management",
+      "vendorCode": "planview",
+      "name": "Resource management",
+      "category": "Resources",
+      "description": "Plan, allocate and manage people and roles across work.",
+      "synonyms": [
+        "resource management",
+        "resource planning",
+        "resource allocation",
+        "resourcing",
+        "resource managers"
+      ]
+    },
+    {
+      "code": "capacity-planning",
+      "vendorCode": "planview",
+      "name": "Capacity planning",
+      "category": "Resources",
+      "description": "Compare demand with capacity by role/skill over time.",
+      "synonyms": [
+        "capacity planning",
+        "capacity management",
+        "demand and capacity",
+        "capacity"
+      ]
+    },
+    {
+      "code": "financial-management",
+      "vendorCode": "planview",
+      "name": "Financial management",
+      "category": "Finance",
+      "description": "Budgets, forecasts, actuals and cost/benefit tracking for work and portfolios.",
+      "synonyms": [
+        "financial management",
+        "financial planning",
+        "budgeting",
+        "budgets",
+        "cost management",
+        "forecasting",
+        "financials",
+        "cost tracking"
+      ]
+    },
+    {
+      "code": "project-governance",
+      "vendorCode": "planview",
+      "name": "Project governance",
+      "category": "Governance",
+      "description": "Lifecycle stage-gates, approvals, compliance and governance controls.",
+      "synonyms": [
+        "project governance",
+        "governance",
+        "stage gate",
+        "stage-gate",
+        "phase gate",
+        "approval workflow",
+        "approvals",
+        "pmo governance"
+      ]
+    },
+    {
+      "code": "project-management",
+      "vendorCode": "planview",
+      "name": "Project management",
+      "category": "Execution",
+      "description": "Plan and execute projects: schedules, tasks, milestones, dependencies.",
+      "synonyms": [
+        "project management",
+        "project planning",
+        "scheduling",
+        "gantt",
+        "project execution",
+        "milestones"
+      ]
+    },
+    {
+      "code": "demand-management",
+      "vendorCode": "planview",
+      "name": "Demand management",
+      "category": "Portfolio & Strategy",
+      "description": "Capture, evaluate and route new work requests (intake).",
+      "synonyms": [
+        "demand management",
+        "intake",
+        "project requests",
+        "work intake",
+        "request management"
+      ]
+    },
+    {
+      "code": "time-tracking",
+      "vendorCode": "planview",
+      "name": "Time tracking",
+      "category": "Resources",
+      "description": "Capture time/actuals against work.",
+      "synonyms": [
+        "time tracking",
+        "timesheets",
+        "timesheet",
+        "time entry",
+        "time reporting"
+      ]
+    },
+    {
+      "code": "agile-planning",
+      "vendorCode": "planview",
+      "name": "Agile planning at scale",
+      "category": "Agile",
+      "description": "Plan and coordinate agile teams and teams-of-teams; connect agile delivery to portfolio.",
+      "synonyms": [
+        "agile planning",
+        "agile at scale",
+        "scaled agile",
+        "safe",
+        "program increment",
+        "pi planning",
+        "agile portfolio",
+        "team of teams",
+        "agile"
+      ]
+    },
+    {
+      "code": "kanban-boards",
+      "vendorCode": "planview",
+      "name": "Kanban / visual boards",
+      "category": "Agile",
+      "description": "Visual boards for flow-based work management with WIP limits.",
+      "synonyms": [
+        "kanban",
+        "visual boards",
+        "kanban boards",
+        "wip limits",
+        "lean"
+      ]
+    },
+    {
+      "code": "collaborative-work-management",
+      "vendorCode": "planview",
+      "name": "Collaborative work management",
+      "category": "Execution",
+      "description": "Team collaboration on tasks, documents and plans.",
+      "synonyms": [
+        "collaborative work management",
+        "collaboration",
+        "team collaboration",
+        "work management",
+        "task management",
+        "document sharing"
+      ]
+    },
+    {
+      "code": "innovation-management",
+      "vendorCode": "planview",
+      "name": "Innovation / idea management",
+      "category": "Innovation",
+      "description": "Crowdsource, evaluate and progress ideas.",
+      "synonyms": [
+        "innovation management",
+        "idea management",
+        "ideation",
+        "crowdsourcing ideas",
+        "innovation"
+      ]
+    },
+    {
+      "code": "value-stream-management",
+      "vendorCode": "planview",
+      "name": "Value stream management",
+      "category": "Agile",
+      "description": "Measure and improve software delivery flow (flow metrics).",
+      "synonyms": [
+        "value stream management",
+        "value stream",
+        "flow metrics",
+        "flow management",
+        "delivery metrics"
+      ]
+    },
+    {
+      "code": "toolchain-integration",
+      "vendorCode": "planview",
+      "name": "Toolchain integration",
+      "category": "Integration",
+      "description": "Synchronise work items across delivery tools (e.g. Jira, Azure DevOps, ServiceNow).",
+      "synonyms": [
+        "toolchain integration",
+        "jira integration",
+        "azure devops integration",
+        "integrate",
+        "integration",
+        "integrations",
+        "synchronization",
+        "synchronisation"
+      ]
+    },
+    {
+      "code": "product-roadmapping",
+      "vendorCode": "planview",
+      "name": "Product roadmapping",
+      "category": "Portfolio & Strategy",
+      "description": "Build and communicate product and strategic roadmaps.",
+      "synonyms": [
+        "roadmapping",
+        "product roadmap",
+        "roadmaps",
+        "roadmap"
+      ]
+    },
+    {
+      "code": "okr-management",
+      "vendorCode": "planview",
+      "name": "OKR management",
+      "category": "Portfolio & Strategy",
+      "description": "Define and track objectives and key results linked to work.",
+      "synonyms": [
+        "okr",
+        "okrs",
+        "objectives and key results"
+      ]
+    },
+    {
+      "code": "reporting-analytics",
+      "vendorCode": "planview",
+      "name": "Reporting & analytics",
+      "category": "Insights",
+      "description": "Dashboards and analytics across portfolios and work.",
+      "synonyms": [
+        "reporting",
+        "dashboards",
+        "analytics",
+        "kpi",
+        "kpis",
+        "portfolio reporting"
+      ]
+    },
+    {
+      "code": "ai-assistance",
+      "vendorCode": "planview",
+      "name": "AI assistance",
+      "category": "Insights",
+      "description": "Generative-AI assistant for insights and automation inside the product.",
+      "synonyms": [
+        "ai assistant",
+        "copilot",
+        "generative ai",
+        "ai insights",
+        "ai-powered"
+      ]
+    },
+    {
+      "code": "workflow-automation",
+      "vendorCode": "planview",
+      "name": "Workflow automation",
+      "category": "Execution",
+      "description": "Configurable automated workflows and business rules.",
+      "synonyms": [
+        "workflow automation",
+        "automated workflows",
+        "automation",
+        "business rules"
+      ]
+    }
+  ],
+  "products": [
+    {
+      "code": "planview-portfolios",
+      "vendorCode": "planview",
+      "name": "Planview Portfolios",
+      "aliases": [
+        "Portfolios",
+        "Planview Enterprise One",
+        "Enterprise One"
+      ],
+      "summary": "Strategic portfolio management (SPM) solution for connecting strategy, funding, resources and delivery across the enterprise.",
+      "solutions": [
+        "Strategic Portfolio Management",
+        "Project Portfolio Management"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "portfolio-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "strategic-planning",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "resource-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "capacity-planning",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "financial-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "project-governance",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "demand-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "reporting-analytics",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "project-management",
+          "coverage": "Supported",
+          "notes": "Project scheduling is supported; collaborative task execution is often paired with a work-management product.",
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "time-tracking",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "product-roadmapping",
+          "coverage": "Supported",
+          "notes": "Strategic/portfolio roadmaps.",
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "agile-planning",
+          "coverage": "ViaIntegration",
+          "notes": "Agile delivery is typically connected via Planview AgilePlace and/or Planview Hub.",
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "toolchain-integration",
+          "coverage": "ViaIntegration",
+          "notes": "Via Planview Hub or integration services.",
+          "evidence": [
+            {
+              "documentId": "planview-portfolios-overview",
+              "title": "Planview Portfolios - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-portfolios-overview",
+          "title": "Planview Portfolios - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Agree the portfolio hierarchy, lifecycle stage-gates and financial planning model before configuration.",
+        "Resource master data quality (roles, skills, availability) is the main driver of capacity-planning value.",
+        "Plan ERP/finance integration for actuals early if financial management is in scope.",
+        "Typical enterprise roll-outs are phased (PMO/portfolio first, then resource and financial management)."
+      ]
+    },
+    {
+      "code": "planview-adaptivework",
+      "vendorCode": "planview",
+      "name": "Planview AdaptiveWork",
+      "aliases": [
+        "AdaptiveWork",
+        "Clarizen"
+      ],
+      "summary": "Project and work management solution for planning and executing projects with collaborative work management, resource management and workflow automation.",
+      "solutions": [
+        "Project Portfolio Management",
+        "Professional Services / Work Management"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "project-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "collaborative-work-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "resource-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "time-tracking",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "workflow-automation",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "portfolio-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "financial-management",
+          "coverage": "Supported",
+          "notes": "Project-level financials.",
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "project-governance",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "demand-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "capacity-planning",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "reporting-analytics",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-adaptivework-overview",
+              "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-adaptivework-overview",
+          "title": "Planview AdaptiveWork - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Highly configurable - define workflow automation and custom data model governance up front to avoid configuration sprawl.",
+        "Confirm whether enterprise-level strategic and financial portfolio planning needs exceed project-level capabilities."
+      ]
+    },
+    {
+      "code": "planview-agileplace",
+      "vendorCode": "planview",
+      "name": "Planview AgilePlace",
+      "aliases": [
+        "AgilePlace",
+        "LeanKit"
+      ],
+      "summary": "Visual Kanban-based work management for agile teams and teams-of-teams, connecting team-level delivery to planning.",
+      "solutions": [
+        "Enterprise Agile Planning",
+        "Digital Product Development"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "kanban-boards",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "agile-planning",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "collaborative-work-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "okr-management",
+          "coverage": "Supported",
+          "notes": "OKR support to be verified by curator.",
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "reporting-analytics",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "toolchain-integration",
+          "coverage": "ViaIntegration",
+          "notes": "Integration with developer tools via Planview Hub or connectors.",
+          "evidence": [
+            {
+              "documentId": "planview-agileplace-overview",
+              "title": "Planview AgilePlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-agileplace-overview",
+          "title": "Planview AgilePlace - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Define board standards (lanes, card types, WIP limits) centrally to keep teams-of-teams reporting consistent.",
+        "Decide the system of record per team (AgilePlace vs. Jira/Azure DevOps) before integrating."
+      ]
+    },
+    {
+      "code": "planview-projectplace",
+      "vendorCode": "planview",
+      "name": "Planview ProjectPlace",
+      "aliases": [
+        "ProjectPlace"
+      ],
+      "summary": "Collaborative work management for teams to plan, share documents and track work using boards and plans.",
+      "solutions": [
+        "Collaborative Work Management"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "collaborative-work-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-projectplace-overview",
+              "title": "Planview ProjectPlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "project-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-projectplace-overview",
+              "title": "Planview ProjectPlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "kanban-boards",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-projectplace-overview",
+              "title": "Planview ProjectPlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-projectplace-overview",
+          "title": "Planview ProjectPlace - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Best suited to team collaboration; pair with a portfolio product when enterprise portfolio governance is required."
+      ]
+    },
+    {
+      "code": "planview-ideaplace",
+      "vendorCode": "planview",
+      "name": "Planview IdeaPlace",
+      "aliases": [
+        "IdeaPlace",
+        "Spigit"
+      ],
+      "summary": "Innovation management to crowdsource, evaluate and progress ideas into the portfolio.",
+      "solutions": [
+        "Innovation Management"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "innovation-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ideaplace-overview",
+              "title": "Planview IdeaPlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "demand-management",
+          "coverage": "Supported",
+          "notes": "Ideas can feed portfolio intake.",
+          "evidence": [
+            {
+              "documentId": "planview-ideaplace-overview",
+              "title": "Planview IdeaPlace - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-ideaplace-overview",
+          "title": "Planview IdeaPlace - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Define idea challenge governance and the hand-off from idea to funded demand."
+      ]
+    },
+    {
+      "code": "planview-hub",
+      "vendorCode": "planview",
+      "name": "Planview Hub",
+      "aliases": [
+        "Hub",
+        "Tasktop",
+        "Tasktop Integration Hub"
+      ],
+      "summary": "Integration platform that synchronises work items across software delivery and portfolio tools (for example Jira, Azure DevOps, ServiceNow).",
+      "solutions": [
+        "Digital Product Development",
+        "Value Stream Management"
+      ],
+      "deploymentModels": [
+        "SaaS",
+        "On-premises"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "toolchain-integration",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-hub-overview",
+              "title": "Planview Hub - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-hub-overview",
+          "title": "Planview Hub - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Model artifact mappings (e.g. epic/feature/story) and conflict rules per integration before go-live.",
+        "On-premises deployment availability to be confirmed with Planview for the customer's scenario."
+      ]
+    },
+    {
+      "code": "planview-viz",
+      "vendorCode": "planview",
+      "name": "Planview Viz",
+      "aliases": [
+        "Viz",
+        "Tasktop Viz"
+      ],
+      "summary": "Value stream management providing flow metrics on software delivery.",
+      "solutions": [
+        "Value Stream Management",
+        "Digital Product Development"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "value-stream-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-viz-overview",
+              "title": "Planview Viz - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "reporting-analytics",
+          "coverage": "Supported",
+          "notes": "Flow-metric analytics.",
+          "evidence": [
+            {
+              "documentId": "planview-viz-overview",
+              "title": "Planview Viz - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-viz-overview",
+          "title": "Planview Viz - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Requires integration with delivery tools (typically via Planview Hub) to obtain flow data."
+      ]
+    },
+    {
+      "code": "planview-ppm-pro",
+      "vendorCode": "planview",
+      "name": "Planview PPM Pro",
+      "aliases": [
+        "PPM Pro",
+        "Innotas"
+      ],
+      "summary": "Project portfolio management focused on fast time-to-value for portfolio, project, resource and time management.",
+      "solutions": [
+        "Project Portfolio Management"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "portfolio-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "project-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "resource-management",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "time-tracking",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "demand-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "financial-management",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "capacity-planning",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        },
+        {
+          "capabilityCode": "reporting-analytics",
+          "coverage": "Supported",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-ppm-pro-overview",
+              "title": "Planview PPM Pro - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-ppm-pro-overview",
+          "title": "Planview PPM Pro - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Confirm fit for multi-business-unit enterprise governance and strategic planning needs; consider Planview Portfolios where those are must-haves."
+      ]
+    },
+    {
+      "code": "planview-roadmaps",
+      "vendorCode": "planview",
+      "name": "Planview Roadmaps",
+      "aliases": [
+        "Roadmaps",
+        "Roadmunk"
+      ],
+      "summary": "Product roadmapping to build, prioritise and communicate product roadmaps.",
+      "solutions": [
+        "Digital Product Development"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "product-roadmapping",
+          "coverage": "Core",
+          "notes": null,
+          "evidence": [
+            {
+              "documentId": "planview-roadmaps-overview",
+              "title": "Planview Roadmaps - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-roadmaps-overview",
+          "title": "Planview Roadmaps - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Agree roadmap taxonomy (themes, initiatives, releases) with product leadership."
+      ]
+    },
+    {
+      "code": "planview-copilot",
+      "vendorCode": "planview",
+      "name": "Planview Copilot",
+      "aliases": [
+        "Copilot",
+        "Planview Advisor"
+      ],
+      "summary": "Generative-AI assistant for Planview solutions providing insights and assistance within the products.",
+      "solutions": [
+        "Cross-portfolio AI"
+      ],
+      "deploymentModels": [
+        "SaaS"
+      ],
+      "capabilities": [
+        {
+          "capabilityCode": "ai-assistance",
+          "coverage": "Core",
+          "notes": "Availability per product, region and licence to be confirmed with Planview.",
+          "evidence": [
+            {
+              "documentId": "planview-copilot-overview",
+              "title": "Planview Copilot - product overview (Avantra summary)",
+              "url": "https://www.planview.com/",
+              "section": "Capabilities",
+              "trust": "AvantraInternal",
+              "retrievedOn": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "documentId": "planview-copilot-overview",
+          "title": "Planview Copilot - product overview (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Overview",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ],
+      "verification": "PendingCuratorVerification",
+      "verifiedOn": null,
+      "implementationConsiderations": [
+        "Review the customer's AI governance policy and data residency requirements before enabling."
+      ]
+    }
+  ],
+  "licensingOptions": [
+    {
+      "code": "portfolios-subscription",
+      "productCode": "planview-portfolios",
+      "name": "Planview Portfolios subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "portfolioManagers",
+        "projectManagers",
+        "resourceManagers",
+        "teamMembers",
+        "executives",
+        "employees"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "adaptivework-subscription",
+      "productCode": "planview-adaptivework",
+      "name": "Planview AdaptiveWork subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "projectManagers",
+        "teamMembers",
+        "executives"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "agileplace-subscription",
+      "productCode": "planview-agileplace",
+      "name": "Planview AgilePlace subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "teamMembers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "projectplace-subscription",
+      "productCode": "planview-projectplace",
+      "name": "Planview ProjectPlace subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "teamMembers",
+        "projectManagers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "ideaplace-subscription",
+      "productCode": "planview-ideaplace",
+      "name": "Planview IdeaPlace subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "employees"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "hub-subscription",
+      "productCode": "planview-hub",
+      "name": "Planview Hub subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "teamMembers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "viz-subscription",
+      "productCode": "planview-viz",
+      "name": "Planview Viz subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "teamMembers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "ppm-pro-subscription",
+      "productCode": "planview-ppm-pro",
+      "name": "Planview PPM Pro subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "projectManagers",
+        "resourceManagers",
+        "teamMembers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "roadmaps-subscription",
+      "productCode": "planview-roadmaps",
+      "name": "Planview Roadmaps subscription",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "teamMembers"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    },
+    {
+      "code": "copilot-subscription",
+      "productCode": "planview-copilot",
+      "name": "Planview Copilot availability",
+      "description": "SaaS subscription. Licence types, editions/packages, minimums and pricing are not held in the knowledge base and must be confirmed with Planview or an authorised partner.",
+      "disclosure": "NotPublic",
+      "licenseMetric": "Not publicly documented - confirm with Planview",
+      "sizingDrivers": [
+        "employees"
+      ],
+      "publicTerms": null,
+      "sources": [
+        {
+          "documentId": "planview-licensing-overview",
+          "title": "Planview licensing & subscription - what is and is not public (Avantra summary)",
+          "url": "https://www.planview.com/",
+          "section": "Licensing",
+          "trust": "AvantraInternal",
+          "retrievedOn": null
+        }
+      ]
+    }
+  ],
+  "fitRules": [
+    {
+      "code": "avr-agile-portfolio-connect",
+      "description": "Agile delivery + portfolio governance: connect Planview Portfolios with Planview AgilePlace",
+      "when": {
+        "methodology": "hybrid",
+        "capabilityPresent": "portfolio-management"
+      },
+      "productCodes": [
+        "planview-portfolios",
+        "planview-agileplace"
+      ],
+      "scoreAdjustment": 0.06,
+      "rationale": "Avantra delivery experience: hybrid organisations need portfolio governance and team-level agile planning connected.",
+      "requiresBusinessConfirmation": true
+    },
+    {
+      "code": "avr-agile-portfolio-connect-agile",
+      "description": "Agile organisation with portfolio needs: Planview Portfolios with Planview AgilePlace",
+      "when": {
+        "methodology": "agile",
+        "capabilityPresent": "portfolio-management"
+      },
+      "productCodes": [
+        "planview-portfolios",
+        "planview-agileplace"
+      ],
+      "scoreAdjustment": 0.06,
+      "rationale": "Avantra delivery experience: agile-at-scale portfolios benefit from a native agile planning layer.",
+      "requiresBusinessConfirmation": true
+    },
+    {
+      "code": "avr-enterprise-spm",
+      "description": "Enterprise scale (1,000+ employees) favours an enterprise SPM platform",
+      "when": {
+        "minEmployees": 1000,
+        "capabilityPresent": "portfolio-management"
+      },
+      "productCodes": [
+        "planview-portfolios"
+      ],
+      "scoreAdjustment": 0.02,
+      "rationale": "Avantra heuristic: multi-business-unit governance and financial planning at enterprise scale.",
+      "requiresBusinessConfirmation": true
+    },
+    {
+      "code": "avr-midmarket-ppm",
+      "description": "Smaller organisations (under 1,000 employees) may get faster time-to-value from Planview PPM Pro",
+      "when": {
+        "maxEmployees": 999,
+        "capabilityPresent": "portfolio-management"
+      },
+      "productCodes": [
+        "planview-ppm-pro"
+      ],
+      "scoreAdjustment": 0.02,
+      "rationale": "Avantra heuristic: simpler PPM requirements and shorter implementations.",
+      "requiresBusinessConfirmation": true
+    }
+  ],
+  "clarificationRules": [
+    {
+      "code": "q-employees",
+      "field": "employees",
+      "question": "How many employees will use or be visible in the solution (including occasional/read-only users)?",
+      "whyItMatters": "Drives solution scale and licence sizing.",
+      "priority": 1
+    },
+    {
+      "code": "q-pms",
+      "field": "projectManagers",
+      "question": "How many project managers will plan and manage work in the tool?",
+      "whyItMatters": "Project managers are a primary licence and configuration persona.",
+      "priority": 1
+    },
+    {
+      "code": "q-portfolio",
+      "field": "portfolioManagers",
+      "question": "How many portfolio managers / PMO analysts will manage portfolios?",
+      "whyItMatters": "Determines portfolio-level licensing and governance design.",
+      "priority": 2,
+      "onlyIfCapability": "portfolio-management"
+    },
+    {
+      "code": "q-method",
+      "field": "methodology",
+      "question": "Do teams deliver using traditional (waterfall/stage-gate), agile, or a hybrid of both?",
+      "whyItMatters": "Determines whether an agile planning product should be part of the solution.",
+      "priority": 1
+    },
+    {
+      "code": "q-bus",
+      "field": "businessUnits",
+      "question": "How many business units or portfolios need separate governance, reporting or financial views?",
+      "whyItMatters": "Affects portfolio hierarchy, security model and implementation phasing.",
+      "priority": 3,
+      "onlyIfCapability": "portfolio-management"
+    },
+    {
+      "code": "q-rms",
+      "field": "resourceManagers",
+      "question": "How many resource managers allocate people, and do you plan by named resource, role or skill?",
+      "whyItMatters": "Resource management design and licence mix depend on it.",
+      "priority": 2,
+      "onlyIfCapability": "resource-management"
+    },
+    {
+      "code": "q-team",
+      "field": "teamMembers",
+      "question": "How many team members will log time or update work items?",
+      "whyItMatters": "Team members are typically the largest licence population.",
+      "priority": 2
+    },
+    {
+      "code": "q-systems",
+      "field": "existingSystems",
+      "question": "Which existing systems must integrate (e.g. Jira, Azure DevOps, ServiceNow, SAP/ERP, Microsoft Project, Power BI)?",
+      "whyItMatters": "Integration scope affects product selection (e.g. Planview Hub) and implementation effort.",
+      "priority": 2
+    },
+    {
+      "code": "q-deploy",
+      "field": "deploymentPreference",
+      "question": "Is SaaS acceptable, or are there on-premises / data residency constraints?",
+      "whyItMatters": "Some products are SaaS-only; residency affects region selection.",
+      "priority": 3
+    },
+    {
+      "code": "q-regions",
+      "field": "regions",
+      "question": "In which regions/countries will users and data be located?",
+      "whyItMatters": "Data residency and language requirements.",
+      "priority": 4
+    }
+  ]
+}
