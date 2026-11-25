@@ -19,9 +19,12 @@ public sealed class KnowledgeBaseDefinition
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastSyncedAt { get; set; }
+    /// <summary>Website crawl settings as JSON (sitemaps, include/exclude paths, limits). Null = no crawling.</summary>
+    public string? CrawlConfigJson { get; set; }
+    public DateTimeOffset? LastCrawledAt { get; set; }
 }
 
-public enum IngestionJobState { Queued = 0, Running = 1, Succeeded = 2, PartiallySucceeded = 3, Failed = 4, Interrupted = 5 }
+public enum IngestionJobState { Queued = 0, Running = 1, Succeeded = 2, PartiallySucceeded = 3, Failed = 4, Interrupted = 5, Cancelled = 6 }
 
 /// <summary>Persisted status of one ingestion job (upload, URL, folder sync).</summary>
 public sealed class IngestionJobRecord

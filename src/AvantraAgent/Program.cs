@@ -66,6 +66,10 @@ builder.Services.Configure<KnowledgeBaseSeedOptions>(builder.Configuration.GetSe
 builder.Services.AddSingleton<KnowledgeReadiness>();
 builder.Services.AddSingleton<IngestionQueue>();
 builder.Services.AddHostedService<IngestionWorker>();
+builder.Services.AddHostedService<CrawlWorker>();
+builder.Services.AddSingleton<WebsiteCrawler>();
+builder.Services.AddHttpClient("crawler", c => c.Timeout = TimeSpan.FromSeconds(60))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, AutomaticDecompression = System.Net.DecompressionMethods.All });
 builder.Services.AddHostedService<KnowledgeSyncScheduler>();
 builder.Services.AddScoped<KnowledgeBaseService>();
 builder.Services.AddHttpClient("ingestion", c => c.Timeout = TimeSpan.FromSeconds(60))
@@ -88,6 +92,9 @@ builder.Services.AddMcpServer(o =>
     })
     .WithHttpTransport(o => o.Stateless = true)
     .WithTools<AgentMcpTools>(mcpJson);
+// Live Planview data is optional: the tool only exists when a Planview API is configured.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Connectors:Planview:Api:BaseUrl"]))
+    builder.Services.AddMcpServer().WithTools<PlanviewApiMcpTools>(mcpJson);
 
 var app = builder.Build();
 
@@ -176,6 +183,18 @@ admin.MapPost("/{code}/sync", async (string code, KnowledgeBaseService s, Cancel
         return Results.Accepted($"/api/jobs/{job.Id}", JobView.From(job, details: false));
     })
      .WithSummary("Ingest the knowledge base's source folder now (unchanged files are skipped).");
+admin.MapGet("/{code}/crawl-config", (string code, KnowledgeBaseService s) => s.GetCrawlConfig(code) is { } c ? Results.Ok(c) : Results.NoContent());
+admin.MapPut("/{code}/crawl-config", (string code, CrawlConfig? cfg, KnowledgeBaseService s, CancellationToken ct) => s.SetCrawlConfigAsync(code, cfg, ct))
+     .WithSummary("Set the website crawl (sitemaps, include/exclude paths, max pages, delay).");
+admin.MapPost("/{code}/crawl", async (string code, StartCrawlRequest? r, KnowledgeBaseService s, CancellationToken ct) =>
+    {
+        var job = await s.StartCrawlAsync(code, r?.MaxPages, ct, r?.Force ?? false);
+        return Results.Accepted($"/api/jobs/{job.Id}", JobView.From(job, details: false));
+    })
+     .WithSummary("Crawl the configured website now (polite: robots.txt and crawl delays; unchanged pages are skipped).");
+api.MapPost("/jobs/{id:guid}/cancel", async (Guid id, KnowledgeBaseService s, CancellationToken ct) =>
+        await s.CancelJobAsync(id, ct) ? Results.Accepted($"/api/jobs/{id}") : Results.NotFound())
+   .WithTags("Knowledge management").AddEndpointFilter<AdminKeyFilter>();
 admin.MapPost("/{code}/documents/{id:guid}/publish", async (string code, Guid id, KnowledgeBaseService s, IngestionService ingestion, CancellationToken ct) =>
     {
         s.Require(code);
@@ -191,8 +210,12 @@ await app.Services.InitializeDatabaseAsync();
 var registry = app.Services.GetRequiredService<EfKnowledgeBaseRegistry>();
 await registry.LoadAsync(CancellationToken.None);
 foreach (var seed in app.Services.GetRequiredService<IOptions<KnowledgeBaseSeedOptions>>().Value.Seed)
+{
     if (registry.Get(seed.Code) is null)
         await registry.CreateAsync(seed.ToDefinition(), CancellationToken.None);
+    else if (seed.Crawl is not null && string.IsNullOrWhiteSpace(registry.Get(seed.Code)!.CrawlConfigJson))
+        await registry.UpdateAsync(seed.Code, k => k.CrawlConfigJson = seed.ToDefinition().CrawlConfigJson, CancellationToken.None);
+}
 if (!app.Environment.IsDevelopment() && string.IsNullOrEmpty(app.Configuration["Security:AdminApiKey"]))
     app.Logger.LogWarning("Security:AdminApiKey is not set: knowledge-management endpoints rely entirely on the platform in front of AvantraAgent.");
 

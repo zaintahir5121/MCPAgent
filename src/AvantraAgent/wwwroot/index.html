@@ -177,10 +177,12 @@ function renderKbs(kbs) {
         ${k.isEnabled ? '' : '<span class="badge warn">disabled</span>'}
       </div>
       <div class="code" style="margin-top:.3rem">${k.sourceFolder ? `Folder: ${esc(k.sourceFolder)}${k.syncIntervalHours ? ` · every ${k.syncIntervalHours} h` : ''}` : 'No source folder'}${k.lastSyncedAt ? ` · last sync ${new Date(k.lastSyncedAt).toLocaleString()}` : ''}</div>
+      ${k.hasCrawl ? `<div class="code">Website crawl configured${k.lastCrawledAt ? ` · last crawl ${new Date(k.lastCrawledAt).toLocaleString()}` : ' · not crawled yet'}</div>` : ''}
       <div class="row">
         <button class="btn light" data-act="upload" data-kb="${esc(k.code)}">Upload files</button>
         <button class="btn light" data-act="url" data-kb="${esc(k.code)}">Add from URL</button>
         ${k.sourceFolder ? `<button class="btn light" data-act="sync" data-kb="${esc(k.code)}">Sync now</button>` : ''}
+        ${k.hasCrawl ? `<button class="btn light" data-act="crawl" data-kb="${esc(k.code)}">Crawl website</button>` : ''}
       </div>
     </div>`).join('');
 }
@@ -197,13 +199,13 @@ async function refresh() {
 
 function renderJobs() {
   const jobs = [...recentJobs.values()].sort((a, b) => b.queuedAt.localeCompare(a.queuedAt)).slice(0, 8);
-  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<div><b>${esc(j.knowledgeBase)}</b> · ${esc(j.kind)} · <b>${esc(j.state)}</b> · ${j.items} item(s): ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} review, ${j.quarantined} quarantined, ${j.failed} failed${j.error ? ' · ' + esc(j.error) : ''}</div>`).join('') : 'No jobs yet.';
+  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<div><b>${esc(j.knowledgeBase)}</b> · ${esc(j.kind)} · <b>${esc(j.state)}</b> · ${j.items} item(s): ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} review, ${j.quarantined} quarantined, ${j.failed} failed${j.error ? ' · ' + esc(j.error) : ''}${['Queued','Running'].includes(j.state) ? ` <button class="btn light" style="padding:.1rem .5rem;font-size:.75rem" data-cancel="${esc(j.id)}">Cancel</button>` : ''}</div>`).join('') : 'No jobs yet.';
 }
 
 async function track(job) {
   recentJobs.set(job.id, job); renderJobs();
-  for (let i = 0; i < 120; i++) {
-    await new Promise(r => setTimeout(r, 1000));
+  for (let i = 0; i < 43200; i++) {
+    await new Promise(r => setTimeout(r, i < 60 ? 1000 : 5000));
     try { const j = await api(`api/jobs/${job.id}`); recentJobs.set(j.id, j); renderJobs();
       if (!['Queued','Running'].includes(j.state)) { add('sys', `Ingestion into "${j.knowledgeBase}" ${j.state.toLowerCase()}: ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} waiting review, ${j.quarantined} quarantined, ${j.failed} failed.`); refresh(); return; }
     } catch { }
@@ -216,11 +218,17 @@ $('kbList').addEventListener('click', async e => {
   try {
     if (b.dataset.act === 'upload') { uploadTarget = kb; $('filePicker').value = ''; $('filePicker').click(); }
     if (b.dataset.act === 'sync') track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/sync`, { method:'POST' }));
+    if (b.dataset.act === 'crawl') { track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/crawl`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })); add('sys', 'Website crawl started. It runs in the background and respects the site\'s crawl rules — large sites can take hours. Progress is under Recent jobs.'); }
     if (b.dataset.act === 'url') {
       const url = prompt('https:// URL of the document (the host must be allowed by the server):'); if (!url) return;
       track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/documents/from-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }) }));
     }
   } catch (err) { add('sys', err.message); }
+});
+$('jobs').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-cancel]'); if (!b) return;
+  try { await api(`api/jobs/${b.dataset.cancel}/cancel`, { method:'POST' }); add('sys', 'Cancellation requested; the job stops after the current page or file.'); }
+  catch (err) { add('sys', err.message); }
 });
 $('filePicker').addEventListener('change', async () => {
   const files = [...$('filePicker').files]; if (!files.length || !uploadTarget) return;

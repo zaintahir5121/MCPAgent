@@ -37,6 +37,32 @@ After pulling a version with schema changes, delete the local `.db` file (produc
    - From a folder, on a schedule: set `sourceFolder` and `syncIntervalHours` (PATCH), or `POST /api/knowledge-bases/{code}/sync`
 3. **Ask** — the page, `POST /api/chat {"message":"...","knowledgeBase":"salesforce"|"all"}`, or MCP `ask_advisor`/`knowledge_search`.
 
+### Crawl a vendor's public website (e.g. all of Planview)
+
+The **planview** knowledge base comes with a crawl configured for `www.planview.com` (product, solution, guide, article,
+topic and page sitemaps, English) and `success.planview.com` (product documentation, ~12,600 pages):
+
+```bash
+curl -X POST http://localhost:5090/api/knowledge-bases/planview/crawl -H "Content-Type: application/json" -d '{}'
+# or the "Crawl website" button in the Knowledge panel; progress: GET /api/jobs/{id}; stop: POST /api/jobs/{id}/cancel
+```
+
+- **Polite**: obeys robots.txt (Allow/Disallow and `Crawl-delay` — success.planview.com asks for 5 s between requests,
+  so the first full documentation crawl takes ~18 hours), only https hosts listed in `Ingestion:AllowedUrlHosts`,
+  same-host redirects only, 10 MB page limit, identifies itself as `AvantraAgent-KnowledgeCrawler/1.0`.
+- **Incremental**: later crawls use the sitemap `lastmod` dates and only fetch pages that changed. `{"force": true}`
+  re-fetches everything (e.g. after improving extraction). `{"maxPages": N}` caps one run; the rest follows next run.
+- **Clean content**: only the page's main content is kept (navigation, menus, link lists, footers, cookie and share
+  widgets are removed); each page becomes a document with its URL as the source, trust `VendorOfficial`.
+- **Scheduled**: after the first crawl, it repeats every `SyncIntervalHours` (24 h for Planview). Crawls run on their own
+  worker, so uploads are never blocked behind a long crawl.
+- Change what is crawled with `PUT /api/knowledge-bases/{code}/crawl-config` (sitemaps, startUrls, include/exclude path
+  patterns such as `/lp/*`, maxPages, minDelayMs, trust). Any knowledge base can have a crawl (e.g. Salesforce, OutSystems docs).
+- Confirm the vendor's website terms allow this use before crawling at scale.
+
+No live Planview API is needed. If you get one later, set `Connectors:Planview:Api:BaseUrl` and the `planview_api_get`
+tool appears automatically (it is hidden while not configured).
+
 Behaviour you can rely on: unchanged files are skipped (content hash), changed files become new versions, suspicious
 files are **quarantined**, uploads can wait for review (`Ingestion:PublishUploadsByDefault=false` → `POST .../documents/{id}/publish`).
 
@@ -60,6 +86,9 @@ Without a pack, the knowledge base is fully searchable and usable in chat.
 | POST 🔑 | `/api/knowledge-bases/{code}/documents` | Upload files (202 + job) |
 | POST 🔑 | `/api/knowledge-bases/{code}/documents/from-url` | Ingest from URL (202 + job) |
 | POST 🔑 | `/api/knowledge-bases/{code}/sync` | Sync source folder now (202 + job) |
+| GET/PUT 🔑 | `/api/knowledge-bases/{code}/crawl-config` | Website crawl settings |
+| POST 🔑 | `/api/knowledge-bases/{code}/crawl` | Crawl now `{ maxPages?, force? }` (202 + job) |
+| POST 🔑 | `/api/jobs/{id}/cancel` | Cancel a queued or running job |
 | POST 🔑 | `/api/knowledge-bases/{code}/documents/{id}/publish` | Publish a document waiting for review |
 | DELETE 🔑 | `/api/knowledge-bases/{code}/documents/{id}` | Remove a document from DB and index |
 
@@ -69,7 +98,7 @@ Without a pack, the knowledge base is fully searchable and usable in chat.
 ## MCP tools
 
 `ask_advisor`, `knowledge_list`, `knowledge_search`, `advisory_recommend`, `advisory_compare`, `advisory_licensing`,
-`advisory_list_products`, `planview_api_get`. All take a `knowledgeBase` code, so new knowledge bases are usable by
+`advisory_list_products` (+ `planview_api_get` only when a Planview API is configured). All take a `knowledgeBase` code, so new knowledge bases are usable by
 MCP clients immediately. Knowledge management is intentionally **not** exposed via MCP.
 
 ```json
@@ -101,4 +130,4 @@ Configuration is validated at startup; the service refuses to start with an inva
 - **Scaling**: run one instance for the ingestion worker; with `Search:Provider=AzureAiSearch` chat/MCP can scale out
   (the in-memory index is per instance and meant for development). Jobs interrupted by a restart are marked *Interrupted*.
 - **Schema changes**: `dotnet ef migrations add <Name> -p src/Avantra.AIAdvisory.Infrastructure -o Persistence/Migrations`.
-- **Tests**: `dotnet test tests/AvantraAgent.Tests` (15 tests: knowledge bases, jobs, isolation, admin key, URL rules, chat, MCP, AI path).
+- **Tests**: `dotnet test tests/AvantraAgent.Tests` (23 tests: knowledge bases, jobs, isolation, admin key, URL rules, website crawl with robots/sitemaps/redirects, chat, MCP, AI path).

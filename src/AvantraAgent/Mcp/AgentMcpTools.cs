@@ -82,7 +82,13 @@ public sealed class AgentMcpTools
     public static object Products(AdvisoryTools tools, [Description("Knowledge base code")] string knowledgeBase) =>
         tools.ListProducts(tools.Normalize(knowledgeBase));
 
+}
+
+/// <summary>Registered only when Connectors:Planview:Api:BaseUrl is configured.</summary>
+[McpServerToolType]
+public sealed class PlanviewApiMcpTools
+{
     [McpServerTool(Name = "planview_api_get", Title = "Read live Planview data", ReadOnly = true, Idempotent = true, OpenWorld = true)]
-    [Description("Live data: read-only GET to the configured Planview API (relative path). Says 'not configured' when no Planview API is set up.")]
+    [Description("Live data: read-only GET to the configured Planview API (relative path).")]
     public static Task<string> PlanviewApi(PlanviewApiClient api, [Description("Relative API path")] string path, CancellationToken ct = default) => api.GetAsync(path, ct);
 }

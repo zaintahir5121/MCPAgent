@@ -16,7 +16,11 @@ public sealed record UrlIngestionRequest(string Url, bool? Publish = null, Sourc
 
 public sealed record KnowledgeBaseView(
     string Code, string Name, string? Description, string IndexName, string SearchProvider, bool AdvisoryEnabled, bool IsEnabled,
-    string? SourceFolder, double SyncIntervalHours, DateTimeOffset? LastSyncedAt, int PublishedDocuments, int PendingReview, int Quarantined);
+    string? SourceFolder, double SyncIntervalHours, DateTimeOffset? LastSyncedAt, int PublishedDocuments, int PendingReview, int Quarantined,
+    bool HasCrawl = false, DateTimeOffset? LastCrawledAt = null);
+
+/// <param name="Force">Re-fetch every page even if the sitemap says it is unchanged (e.g. after improving extraction).</param>
+public sealed record StartCrawlRequest(int? MaxPages = null, bool Force = false);
 
 public sealed record JobView(
     Guid Id, string KnowledgeBase, string Kind, string Trigger, string State, int Items, int Created, int Updated, int Unchanged,
@@ -55,7 +59,8 @@ public sealed class KnowledgeBaseService(
     private KnowledgeBaseView View(KnowledgeBaseDefinition k, Dictionary<DocumentStatus, int> c) => new(
         k.Code, k.Name, k.Description, router.IndexNameFor(k.Code), search.Value.Provider, catalogue.GetPack(k.Code) is not null, k.IsEnabled,
         k.SourceFolder, k.SyncIntervalHours, k.LastSyncedAt,
-        c.GetValueOrDefault(DocumentStatus.Published), c.GetValueOrDefault(DocumentStatus.PendingReview), c.GetValueOrDefault(DocumentStatus.Quarantined));
+        c.GetValueOrDefault(DocumentStatus.Published), c.GetValueOrDefault(DocumentStatus.PendingReview), c.GetValueOrDefault(DocumentStatus.Quarantined),
+        !string.IsNullOrWhiteSpace(k.CrawlConfigJson), k.LastCrawledAt);
 
     public async Task<KnowledgeBaseView> CreateAsync(CreateKnowledgeBaseRequest r, CancellationToken ct)
     {
@@ -168,6 +173,48 @@ public sealed class KnowledgeBaseService(
         if (string.IsNullOrWhiteSpace(kb.SourceFolder)) throw new ArgumentException($"Knowledge base '{code}' has no source folder. Set one, or upload documents instead.");
         if (await queue.HasPendingJobAsync(code, "folder-sync", ct)) throw new InvalidOperationException("A sync for this knowledge base is already queued or running.");
         return await queue.EnqueueAsync(code, "folder-sync", "api", [], SourceFolders.Resolve(kb.SourceFolder, _o), publish: true, SourceTrustLevel.AvantraInternal, user.UserId, ct);
+    }
+
+    public CrawlConfig? GetCrawlConfig(string code)
+    {
+        var kb = Require(code);
+        return string.IsNullOrWhiteSpace(kb.CrawlConfigJson) ? null : JsonSerializer.Deserialize<CrawlConfig>(kb.CrawlConfigJson, CrawlJson.Options);
+    }
+
+    /// <summary>Set (or clear with null) the website crawl of a knowledge base. All URLs must be https on Ingestion:AllowedUrlHosts.</summary>
+    public async Task<CrawlConfig?> SetCrawlConfigAsync(string code, CrawlConfig? cfg, CancellationToken ct)
+    {
+        Require(code);
+        if (cfg is not null)
+        {
+            if (cfg.Sitemaps.Count + cfg.StartUrls.Count == 0) throw new ArgumentException("Provide at least one sitemap or start URL.");
+            foreach (var u in cfg.Sitemaps.Concat(cfg.StartUrls))
+            {
+                if (!Uri.TryCreate(u, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) throw new ArgumentException($"'{u}' is not an https URL.");
+                if (!_o.AllowedUrlHosts.Any(h => string.Equals(h, uri.Host, StringComparison.OrdinalIgnoreCase)))
+                    throw new ArgumentException($"Host '{uri.Host}' is not in Ingestion:AllowedUrlHosts.");
+            }
+            if (cfg.MaxPages is < 1 or > 50_000) throw new ArgumentException("MaxPages must be 1-50000.");
+            if (cfg.MinDelayMs < 250) throw new ArgumentException("MinDelayMs must be at least 250 ms (be polite to the website).");
+        }
+        await registry.UpdateAsync(code, k => k.CrawlConfigJson = cfg is null ? null : JsonSerializer.Serialize(cfg, CrawlJson.Options), ct);
+        return cfg;
+    }
+
+    public async Task<IngestionJobRecord> StartCrawlAsync(string code, int? maxPages, CancellationToken ct, bool force = false)
+    {
+        var cfg = GetCrawlConfig(code) ?? throw new ArgumentException($"Knowledge base '{code}' has no website crawl configured (PUT .../crawl-config first).");
+        if (await queue.HasPendingJobAsync(code, "crawl", ct)) throw new InvalidOperationException("A crawl for this knowledge base is already queued or running.");
+        return await queue.EnqueueAsync(code, "crawl", "api", [], null, publish: true, cfg.Trust, user.UserId, ct, cfg, maxPages, force);
+    }
+
+    public async Task<bool> CancelJobAsync(Guid id, CancellationToken ct)
+    {
+        var job = await db.IngestionJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, ct);
+        if (job is null) return false;
+        if (job.State is not (IngestionJobState.Queued or IngestionJobState.Running)) throw new InvalidOperationException($"Job is already {job.State}.");
+        queue.RequestCancel(id);
+        return true;
     }
 
     public async Task<IReadOnlyList<JobView>> JobsAsync(string? code, int take, CancellationToken ct)

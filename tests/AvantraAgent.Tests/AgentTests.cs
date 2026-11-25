@@ -154,8 +154,9 @@ public class AgentTests(AgentFactory factory) : IClassFixture<AgentFactory>
             Endpoint = new Uri(http.BaseAddress!, "/mcp"), TransportMode = HttpTransportMode.StreamableHttp,
         }, http, ownsHttpClient: false));
         var tools = (await mcp.ListToolsAsync()).Select(t => t.Name).ToList();
-        foreach (var t in new[] { "ask_advisor", "knowledge_list", "knowledge_search", "advisory_recommend", "advisory_compare", "advisory_licensing", "advisory_list_products", "planview_api_get" })
+        foreach (var t in new[] { "ask_advisor", "knowledge_list", "knowledge_search", "advisory_recommend", "advisory_compare", "advisory_licensing", "advisory_list_products" })
             Assert.Contains(t, tools);
+        Assert.DoesNotContain("planview_api_get", tools); // no Planview API configured → no live-data tool
         Assert.DoesNotContain(tools, t => t.Contains("create") || t.Contains("upload") || t.Contains("delete") || t.Contains("ingest"));
 
         static string Text(CallToolResult r) => string.Concat(r.Content.OfType<TextContentBlock>().Select(x => x.Text));

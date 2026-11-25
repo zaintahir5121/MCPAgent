@@ -75,3 +75,28 @@ public class KnowledgeTests
         return d;
     }
 }
+
+public class WebPageExtractionTests
+{
+    [Fact]
+    public void In_content_menus_and_link_lists_are_removed_but_content_lists_stay()
+    {
+        var html = """
+            <html><head><title>Convert a Request</title></head><body><header>Site header</header>
+            <main><section class="products-nav"><div><a>Planview Clarizen Nav</a></div><ul class="nav-menu"><li><a href="/o">Overview</a></li><li><a href="/d">Demo</a></li></ul></section>
+            <h1>Convert a Request to a Project</h1><p>A custom action that creates a project from a request.</p>
+            <ul><li><a href="/x">Related A</a></li><li><a href="/y">Related B</a></li><li><a href="/z">Related C</a></li></ul>
+            <ul><li>Creates the project automatically</li><li>Links the request to the project</li></ul>
+            <div role="navigation"><a>Prev</a><a>Next</a></div></main><footer>Footer</footer></body></html>
+            """;
+        var doc = Avantra.AIAdvisory.KnowledgeBase.Parsing.HtmlParser.Parse(html);
+        var text = string.Join(" ", doc.Sections.Select(s => s.Heading + " " + s.Text));
+        Assert.Contains("creates a project from a request", text);
+        Assert.Contains("Links the request to the project", text);
+        Assert.DoesNotContain("Clarizen Nav", text);
+        Assert.DoesNotContain("Overview", text);
+        Assert.DoesNotContain("Related A", text);
+        Assert.DoesNotContain("Prev", text);
+        Assert.DoesNotContain("Site header", text);
+    }
+}

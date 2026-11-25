@@ -102,7 +102,7 @@ public sealed class PlainTextParser : IDocumentParser
 /// <summary>Dependency-free HTML extractor: drops script/style/nav, splits on h1-h3, decodes entities.</summary>
 public sealed partial class HtmlParser : IDocumentParser
 {
-    [GeneratedRegex(@"<(head|script|style|nav|footer|header|noscript|svg|title)[^>]*>.*?</\1>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    [GeneratedRegex(@"<(head|script|style|nav|footer|header|noscript|svg|title|form|aside|iframe|button|select|template)[^>]*>.*?</\1>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex Noise();
     [GeneratedRegex(@"<title[^>]*>(.*?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex Title();
@@ -127,6 +127,8 @@ public sealed partial class HtmlParser : IDocumentParser
     internal static ParsedDocument Parse(string html)
     {
         var title = Title().Match(html) is { Success: true } t ? Clean(t.Groups[1].Value) : null;
+        html = MainContent(html);
+        html = RemoveChrome(html);
         html = Noise().Replace(html, " ");
         html = Regex.Replace(html, @"<(br|/p|/li|/div|/tr)[^>]*>", "\n", RegexOptions.IgnoreCase);
         var sections = new List<ParsedSection>();
@@ -142,6 +144,73 @@ public sealed partial class HtmlParser : IDocumentParser
         }
         Add(sections, heading, html[last..]);
         return new ParsedDocument(title, sections, new Dictionary<string, string>());
+    }
+
+    [GeneratedRegex(@"<(section|div|ul|ol|nav|aside)\b[^>]*?(?:class\s*=\s*""[^""]*?(?<![a-z])(?:nav|navbar|navigation|menu|submenu|breadcrumbs?|sidebar|share|sharing|social|cookie|cookies|newsletter|modal|pagination|toc-nav)(?![a-z])[^""]*""|role\s*=\s*""(?:navigation|menu|banner|contentinfo)"")[^>]*>",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex ChromeStart();
+
+    [GeneratedRegex(@"<(ul|ol)\b[^>]*>(?:\s*<li\b[^>]*>\s*<a\b[^>]*>[^<]{0,80}</a>\s*</li>)+\s*</\1>", RegexOptions.IgnoreCase)]
+    private static partial Regex LinkOnlyList();
+
+    /// <summary>
+    /// Removes page chrome that sits inside the main content: elements whose class/role marks them as navigation,
+    /// menus, breadcrumbs, sidebars, share/social, cookie or newsletter widgets (matched with nesting), and lists
+    /// that contain nothing but links.
+    /// </summary>
+    public static string RemoveChrome(string html)
+    {
+        for (var guard = 0; guard < 200; guard++)
+        {
+            var m = ChromeStart().Match(html);
+            if (!m.Success) break;
+            var tag = m.Groups[1].Value;
+            var end = MatchingClose(html, tag, m.Index + m.Length);
+            html = html[..m.Index] + " " + (end < 0 ? html[(m.Index + m.Length)..] : html[end..]);
+        }
+        return LinkOnlyList().Replace(html, " ");
+    }
+
+    /// <summary>Index just after the closing tag that matches an opening tag (nesting-aware); -1 if unbalanced.</summary>
+    private static int MatchingClose(string html, string tag, int from)
+    {
+        var depth = 1;
+        var open = new Regex($@"<{tag}\b", RegexOptions.IgnoreCase);
+        var close = new Regex($@"</{tag}\s*>", RegexOptions.IgnoreCase);
+        var pos = from;
+        while (depth > 0)
+        {
+            var c = close.Match(html, pos);
+            if (!c.Success) return -1;
+            var o = open.Match(html, pos);
+            if (o.Success && o.Index < c.Index) { depth++; pos = o.Index + o.Length; }
+            else { depth--; pos = c.Index + c.Length; }
+        }
+        return pos;
+    }
+
+    /// <summary>Web pages: keep only the main content (&lt;main&gt;, else the first &lt;article&gt;), not menus and footers.</summary>
+    [GeneratedRegex(@"<(\w+)\b[^>]*?(?:\bid\s*=\s*""(?:[\w-]*-)?main-content""|\brole\s*=\s*""main"")[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex ExplicitMain();
+
+    public static string MainContent(string html)
+    {
+        // 1. An element explicitly marked as the main content (id="main-content", id="elm-main-content", role="main").
+        var em = ExplicitMain().Match(html);
+        if (em.Success)
+        {
+            var end = MatchingClose(html, em.Groups[1].Value, em.Index + em.Length);
+            if (end > 0) return html[em.Index..end];
+        }
+        // 2. <main>, else the first <article>.
+        foreach (var tag in new[] { "main", "article" })
+        {
+            var start = html.IndexOf("<" + tag, StringComparison.OrdinalIgnoreCase);
+            if (start < 0 || (start + tag.Length + 1 < html.Length && char.IsLetterOrDigit(html[start + tag.Length + 1]))) continue;
+            var end = html.LastIndexOf("</" + tag + ">", StringComparison.OrdinalIgnoreCase);
+            if (end > start) return html[start..(end + tag.Length + 3)];
+        }
+        return html;
     }
 
     private static void Add(List<ParsedSection> sections, string? heading, string fragment)

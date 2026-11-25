@@ -17,10 +17,13 @@ public sealed class KnowledgeBaseSeed
     public string? IndexName { get; set; }
     public string? SourceFolder { get; set; }
     public double SyncIntervalHours { get; set; }
+    /// <summary>Optional website crawl (sitemaps, include/exclude paths, limits).</summary>
+    public CrawlConfig? Crawl { get; set; }
 
     public KnowledgeBaseDefinition ToDefinition() => new()
     {
         Code = Code, Name = Name, Description = Description, IndexName = IndexName ?? "", SourceFolder = SourceFolder, SyncIntervalHours = SyncIntervalHours,
+        CrawlConfigJson = Crawl is null ? null : System.Text.Json.JsonSerializer.Serialize(Crawl, CrawlJson.Options),
     };
 }
 
@@ -40,6 +43,8 @@ public sealed class IngestionOptions
     public bool PublishUploadsByDefault { get; set; } = true;
     /// <summary>Sync every knowledge base that has a source folder once at startup.</summary>
     public bool SyncOnStartup { get; set; } = true;
+    /// <summary>Start website crawls of never-crawled knowledge bases at startup (off: start the first crawl manually).</summary>
+    public bool CrawlOnStartup { get; set; }
 
     public static readonly string[] SupportedExtensions = [".md", ".markdown", ".txt", ".html", ".htm", ".pdf", ".docx"];
 }

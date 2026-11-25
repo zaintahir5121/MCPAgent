@@ -206,6 +206,10 @@ namespace Avantra.AIAdvisory.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("CrawlConfigJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -220,6 +224,9 @@ namespace Avantra.AIAdvisory.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LastCrawledAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("LastSyncedAt")
                         .HasColumnType("datetimeoffset");

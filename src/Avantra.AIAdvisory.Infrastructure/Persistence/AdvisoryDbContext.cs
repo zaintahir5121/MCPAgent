@@ -79,6 +79,7 @@ public sealed class AdvisoryDbContext(DbContextOptions<AdvisoryDbContext> option
             e.Property(x => x.Description).HasMaxLength(2000);
             e.Property(x => x.IndexName).HasMaxLength(128).IsRequired();
             e.Property(x => x.SourceFolder).HasMaxLength(1000);
+            e.Property(x => x.CrawlConfigJson).HasMaxLength(8000);
             e.HasIndex(x => x.IndexName).IsUnique();
         });
 

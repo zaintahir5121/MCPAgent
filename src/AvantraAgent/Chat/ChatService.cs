@@ -134,7 +134,7 @@ public sealed partial class ChatService(
                 AIFunctionFactory.Create(Recommend, "advisory_recommend"),
                 AIFunctionFactory.Create(Compare, "advisory_compare"),
                 AIFunctionFactory.Create(Products, "advisory_list_products"),
-                AIFunctionFactory.Create(PlanviewApi, "planview_api_get"),
+                .. (planviewApi.IsConfigured ? [AIFunctionFactory.Create(PlanviewApi, "planview_api_get")] : Array.Empty<AITool>()),
             ],
             loggerFactory: loggerFactory);
 
