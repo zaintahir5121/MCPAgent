@@ -28,9 +28,11 @@ public sealed record CrawlConfig
     /// <summary>Minimum pause between requests to the same host; robots.txt Crawl-delay wins when larger.</summary>
     public int MinDelayMs { get; init; } = 1000;
     public SourceTrustLevel Trust { get; init; } = SourceTrustLevel.VendorOfficial;
+    /// <summary>Pages whose main content contains any of these phrases are not stored (e.g. sign-in walls); stored copies are removed.</summary>
+    public List<string> SkipIfContains { get; init; } = [];
 }
 
-public sealed record CrawlProgress(int Discovered, int Fetched, int Created, int Updated, int Unchanged, int Skipped, int Quarantined, int Failed);
+public sealed record CrawlProgress(int Discovered, int Fetched, int Created, int Updated, int Unchanged, int Skipped, int Quarantined, int Failed, int Restricted = 0);
 
 /// <summary>
 /// Polite website crawler: robots.txt rules and Crawl-delay, allowed https hosts only, same-host redirects only,
@@ -97,14 +99,15 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
         logger.LogInformation("Crawl of {Kb}: {Discovered} pages discovered, {Candidates} eligible, max {Max} fetches", kb, pages.Count, candidates.Count, maxPages);
 
         // 2. Fetch and ingest
-        int fetched = 0, created = 0, updated = 0, unchanged = 0, skipped = 0, quarantined = 0, failed = 0;
+        int fetched = 0, created = 0, updated = 0, unchanged = 0, skipped = 0, quarantined = 0, failed = 0, restricted = 0;
         var results = new List<PageResult>();
         void Note(string url, string outcome, string? msg = null) { if (results.Count < 3000) results.Add(new PageResult(url, outcome, msg)); }
-        CrawlProgress Progress() => new(candidates.Count, fetched, created, updated, unchanged, skipped, quarantined, failed);
+        CrawlProgress Progress() => new(candidates.Count, fetched, created, updated, unchanged, skipped, quarantined, failed, restricted);
 
         using var scope = scopes.CreateScope();
         var ingestion = scope.ServiceProvider.GetRequiredService<IngestionService>();
         var store = scope.ServiceProvider.GetRequiredService<IKnowledgeStore>();
+        var index = scope.ServiceProvider.GetRequiredService<IKnowledgeIndex>();
         var processed = 0;
         foreach (var (uri, lastmod) in candidates)
         {
@@ -126,6 +129,17 @@ public sealed partial class WebsiteCrawler(IHttpClientFactory httpFactory, IServ
                 var (status, body, final) = await GetAsync(http, uri, MaxPageBytes, Politeness, ct);
                 if (status != HttpStatusCode.OK || body.Length == 0) { failed++; Note(uri.ToString(), "Failed", $"HTTP {(int)status}"); continue; }
                 var main = Avantra.AIAdvisory.KnowledgeBase.Parsing.HtmlParser.MainContent(body);
+                if (cfg.SkipIfContains.FirstOrDefault(p => main.Contains(p, StringComparison.OrdinalIgnoreCase)) is { } phrase)
+                {
+                    restricted++;
+                    Note(uri.ToString(), "Restricted", $"Skipped: page contains \"{phrase}\"");
+                    if (await store.FindByExternalIdAsync(kb, externalId, ct) is { } stale)
+                    {
+                        await index.RemoveAsync(stale.Id, ct);
+                        await store.DeleteAsync(stale.Id, ct);
+                    }
+                    continue;
+                }
                 var title = TitleRegex().Match(body) is { Success: true } t ? t.Value : "";
                 var html = $"<html><head>{title}</head><body>{main}</body></html>";
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));

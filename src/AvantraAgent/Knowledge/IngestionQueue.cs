@@ -154,7 +154,10 @@ public abstract class IngestionWorkerBase(
         {
             Apply(j, progress);
             j.DetailsJson = JsonSerializer.Serialize(results.Select(r => new IngestedItem(r.Url, r.Outcome, "-", 0, r.Message)), Json);
-            j.Error = progress.Skipped > 0 ? $"{progress.Skipped} eligible pages not fetched (page limit reached or cancelled); they are picked up by the next crawl." : null;
+            var notes = new List<string>();
+            if (progress.Restricted > 0) notes.Add($"{progress.Restricted} pages skipped because they need a sign-in or matched a skip phrase");
+            if (progress.Skipped > 0) notes.Add($"{progress.Skipped} eligible pages not fetched (page limit reached or cancelled); they are picked up by the next crawl");
+            j.Error = notes.Count > 0 ? string.Join(". ", notes) + "." : null;
             j.State = cancelled ? IngestionJobState.Cancelled
                 : progress.Failed == 0 ? IngestionJobState.Succeeded
                 : progress.Failed < progress.Fetched ? IngestionJobState.PartiallySucceeded : IngestionJobState.Failed;

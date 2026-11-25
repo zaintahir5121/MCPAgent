@@ -58,10 +58,29 @@ curl -X POST http://localhost:5090/api/knowledge-bases/planview/crawl -H "Conten
   worker, so uploads are never blocked behind a long crawl.
 - Change what is crawled with `PUT /api/knowledge-bases/{code}/crawl-config` (sitemaps, startUrls, include/exclude path
   patterns such as `/lp/*`, maxPages, minDelayMs, trust). Any knowledge base can have a crawl (e.g. Salesforce, OutSystems docs).
+- Pages behind a sign-in are skipped via `skipIfContains` (Planview Portfolios documentation is customer-only, so that section is excluded).
 - Confirm the vendor's website terms allow this use before crawling at scale.
 
 No live Planview API is needed. If you get one later, set `Connectors:Planview:Api:BaseUrl` and the `planview_api_get`
 tool appears automatically (it is hidden while not configured).
+
+#### Where Planview API credentials come from (per Planview's documentation)
+
+The key and URL always come from **a Planview tenant you or the customer own** — Planview does not issue a general public API key.
+
+| Product | Base URL | How to get the key |
+|---|---|---|
+| AgilePlace | `https://<your-account>.leankit.com/io/` | User Profile → **My API Tokens**, or `POST /io/auth/token`. The token is shown only once. |
+| AdaptiveWork | Data-center URL from `getServerDefinition` (e.g. `https://api2.clarizen.com/v2.0/services`) | An admin marks a user as **Integration User** (Global Settings); that user goes to Personal Settings → Integration Settings → **Manage API Keys** → Generate. Keys last 1 year (primary + secondary for rotation). |
+| PPM Pro | `https://<your-subdomain>.ppmpro.com/services/MainService?wsdl` | Web-services **authentication token** (Admin → Web Services). SOAP — needs a dedicated client, not the generic GET tool. |
+| Portfolios | Your Portfolios tenant URL | REST APIs with **OAuth clients** (Administration → Users and Roles → Manage OAuth Clients). The docs need a Planview customer sign-in. |
+
+```bash
+dotnet user-secrets set "Connectors:Planview:Api:BaseUrl" "https://<your-account>.leankit.com/io/"
+dotnet user-secrets set "Connectors:Planview:Api:ApiKey"  "<token>"
+# optional when the product expects another header/scheme:
+# Connectors:Planview:Api:AuthHeader (default Authorization), Connectors:Planview:Api:AuthScheme (default Bearer)
+```
 
 Behaviour you can rely on: unchanged files are skipped (content hash), changed files become new versions, suspicious
 files are **quarantined**, uploads can wait for review (`Ingestion:PublishUploadsByDefault=false` → `POST .../documents/{id}/publish`).
