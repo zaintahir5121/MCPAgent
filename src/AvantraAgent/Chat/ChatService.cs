@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using AvantraAgent.Advisory;
-using AvantraAgent.Connectors.Planview;
 using Avantra.AIAdvisory.Application.Safety;
 using Avantra.AIAdvisory.Domain.Advisory;
 using Microsoft.Agents.AI;
@@ -11,14 +10,17 @@ using Microsoft.Extensions.AI;
 
 namespace AvantraAgent.Chat;
 
-public sealed record ChatRequest(string Message, string? ChatId = null, string? KnowledgeBase = null);
-public sealed record ChatReply(string ChatId, string Answer, string Mode, string KnowledgeBase);
+/// <param name="Discovery">Discovery conversation: statements about the customer (needs, pain points, facts) update the assessment.</param>
+public sealed record ChatRequest(string Message, string? ChatId = null, string? KnowledgeBase = null, bool Discovery = false);
+public sealed record ChatReply(string ChatId, string Answer, string Mode, string KnowledgeBase, DiscoveryState? Discovery = null);
 
 /// <summary>Conversation state per chat. Bounded in memory; advisory results themselves are persisted in the database.</summary>
 public sealed class ChatSessionStore
 {
     private const int MaxSessions = 5000;
     private readonly ConcurrentDictionary<string, ChatSession> _sessions = new();
+
+    public ChatSession? Find(string? id) => string.IsNullOrWhiteSpace(id) ? null : _sessions.GetValueOrDefault(id);
 
     public ChatSession Get(string? id)
     {
@@ -39,6 +41,9 @@ public sealed class ChatSession(string id)
     /// <summary>One advisory session per knowledge base, so follow-up answers refine the right recommendation.</summary>
     public Dictionary<string, Guid> AdvisorySessions { get; } = new(StringComparer.OrdinalIgnoreCase);
     public string? LastAdvisoryKnowledgeBase { get; set; }
+    /// <summary>Everything the customer said (for pain points and the discovery summary).</summary>
+    public List<string> UserMessages { get; } = [];
+    public DiscoveryState? LastDiscovery { get; set; }
     public SemaphoreSlim Lock { get; } = new(1, 1);
 }
 
@@ -48,7 +53,7 @@ public sealed class ChatSession(string id)
 /// No AI → deterministic routing (recommend / refine / compare / search) so the service always works.
 /// </summary>
 public sealed partial class ChatService(
-    AdvisoryTools tools, PlanviewApiClient planviewApi, ChatSessionStore sessions, IServiceProvider services, ILoggerFactory loggerFactory)
+    AdvisoryTools tools, ChatSessionStore sessions, IServiceProvider services, ILoggerFactory loggerFactory)
 {
     public const int MaxMessageLength = 4000;
 
@@ -64,16 +69,34 @@ public sealed partial class ChatService(
         try
         {
             var chat = services.GetService<IChatClient>();
-            var (answer, mode) = chat is null ? await DeterministicAsync(session, kb, message, ct) : await AgentAsync(chat, session, kb, message, ct);
-            return new ChatReply(session.Id, answer, mode, kb);
+            if (request.Discovery && !message.TrimEnd().EndsWith('?')) session.UserMessages.Add(ContentSafety.RedactSensitive(message));
+            var (answer, mode) = chat is null ? await DeterministicAsync(session, kb, message, request.Discovery, ct) : await AgentAsync(chat, session, kb, message, request.Discovery, ct);
+            var discovery = request.Discovery ? await BuildDiscoveryAsync(session, kb, ct) : null;
+            return new ChatReply(session.Id, answer, mode, kb, discovery);
         }
         finally { session.Lock.Release(); }
     }
 
+    public DiscoveryState? GetDiscovery(string chatId) => sessions.Find(chatId)?.LastDiscovery;
+
+    private async Task<DiscoveryState?> BuildDiscoveryAsync(ChatSession session, string selected, CancellationToken ct)
+    {
+        var kb = session.LastAdvisoryKnowledgeBase ?? (selected != AdvisoryTools.All && tools.HasAdvisory(selected) ? selected : tools.AdvisoryKnowledgeBases.FirstOrDefault());
+        if (kb is null) return null;
+        var result = session.AdvisorySessions.TryGetValue(kb, out var id) ? await tools.LatestAsync(id, ct) : null;
+        var name = tools.KnowledgeBases.FirstOrDefault(k => k.Code == kb)?.Name ?? kb;
+        session.LastDiscovery = DiscoveryBuilder.Build(kb, name, result, tools.HasAdvisory(kb) ? tools.Pack(kb) : null, session.UserMessages);
+        return session.LastDiscovery;
+    }
+
     // ------------------------------------------------------------------ agentic (AI configured)
-    private string Instructions(string selected)
+    private string Instructions(string selected, bool discovery)
     {
         var sb = new StringBuilder();
+        if (discovery)
+            sb.AppendLine("You are running an early CUSTOMER DISCOVERY conversation. After every statement about the customer (needs, pain points, size, tools), " +
+                          "call advisory_recommend with the customer's words so the discovery assessment stays current; then briefly reflect what you understood " +
+                          "and ask the one or two most important open questions. Answer product questions with knowledge_search.");
         sb.AppendLine("You are AvantraAgent, Avantra's technology advisor for sales teams and customers.");
         sb.AppendLine("Knowledge bases you can use (code: name — description):");
         foreach (var k in tools.KnowledgeBases)
@@ -93,7 +116,7 @@ public sealed partial class ChatService(
         return sb.ToString();
     }
 
-    private async Task<(string, string)> AgentAsync(IChatClient chat, ChatSession session, string selected, string message, CancellationToken ct)
+    private async Task<(string, string)> AgentAsync(IChatClient chat, ChatSession session, string selected, string message, bool discovery, CancellationToken ct)
     {
         [Description("Search a knowledge base (or \"all\"). Returns passages with sources.")]
         async Task<string> KnowledgeSearch([Description("Knowledge base code, or \"all\"")] string knowledgeBase, [Description("What to look for")] string query)
@@ -112,6 +135,7 @@ public sealed partial class ChatService(
             var code = tools.Normalize(knowledgeBase);
             var r = await tools.RecommendAsync(code, requirements, session.AdvisorySessions.TryGetValue(code, out var s) ? s : null, ct);
             session.AdvisorySessions[code] = r.SessionId;
+            session.LastAdvisoryKnowledgeBase = code;
             return AnswerFormatter.Recommendation(r, tools.Pack(code));
         }
 
@@ -122,10 +146,7 @@ public sealed partial class ChatService(
         [Description("List the products of a knowledge base that has product advisory.")]
         string Products([Description("Knowledge base code")] string knowledgeBase) => AdvisoryTools.ToJson(tools.ListProducts(tools.Normalize(knowledgeBase)));
 
-        [Description("Read live data from the customer's Planview tenant (read-only GET, relative API path). Only when the user asks about their current Planview data.")]
-        Task<string> PlanviewApi([Description("Relative API path")] string path) => planviewApi.GetAsync(path, ct);
-
-        var agent = new ChatClientAgent(chat, instructions: Instructions(selected), name: "AvantraAgent",
+        var agent = new ChatClientAgent(chat, instructions: Instructions(selected, discovery), name: "AvantraAgent",
             description: "Avantra technology advisory agent",
             tools:
             [
@@ -134,7 +155,6 @@ public sealed partial class ChatService(
                 AIFunctionFactory.Create(Recommend, "advisory_recommend"),
                 AIFunctionFactory.Create(Compare, "advisory_compare"),
                 AIFunctionFactory.Create(Products, "advisory_list_products"),
-                .. (planviewApi.IsConfigured ? [AIFunctionFactory.Create(PlanviewApi, "planview_api_get")] : Array.Empty<AITool>()),
             ],
             loggerFactory: loggerFactory);
 
@@ -150,12 +170,15 @@ public sealed partial class ChatService(
     }
 
     // ------------------------------------------------------------------ deterministic (no AI key)
-    private async Task<(string, string)> DeterministicAsync(ChatSession session, string selected, string message, CancellationToken ct)
+    private async Task<(string, string)> DeterministicAsync(ChatSession session, string selected, string message, bool discovery, CancellationToken ct)
     {
         var advisoryKb = tools.ResolveAdvisoryKnowledgeBase(selected, message) ?? (selected == AdvisoryTools.All ? session.LastAdvisoryKnowledgeBase : null);
         var active = advisoryKb is not null && session.AdvisorySessions.ContainsKey(advisoryKb);
         var products = advisoryKb is null ? 0 : tools.FindProducts(advisoryKb, message).Count;
         var intent = DetectIntent(message, active, products);
+        // In discovery, any statement about the customer (not a question) feeds the assessment.
+        if (discovery && intent == ChatIntent.Search && !message.TrimEnd().EndsWith('?') && advisoryKb is not null)
+            intent = active ? ChatIntent.Refine : ChatIntent.Recommend;
 
         if (intent is ChatIntent.Compare && advisoryKb is not null)
             return (AnswerFormatter.Comparison(tools.Compare(advisoryKb, tools.FindProducts(advisoryKb, message))), "compare");

@@ -22,6 +22,7 @@ public class AgentFactory : WebApplicationFactory<Program>
         builder.UseSetting("Ingestion:StagingPath", Path.Combine(_dir, "staging"));
         builder.UseSetting("Ingestion:AllowedUrlHosts:0", "docs.example.com");
         builder.UseSetting("RateLimits:ChatPerMinute", "1000");
+        builder.UseSetting("Ingestion:CrawlOnStartup", "false");
         builder.UseSetting("RateLimits:AdminPerMinute", "1000");
         if (AdminKey is not null) builder.UseSetting("Security:AdminApiKey", AdminKey);
         if (Chat is not null)

@@ -154,10 +154,14 @@ public sealed partial class HeuristicRequirementsExtractor : IRequirementsExtrac
     private static IEnumerable<string> Terms(Capability cap) =>
         new[] { cap.Name.ToLowerInvariant() }.Concat(cap.Synonyms.Select(s => s.ToLowerInvariant()));
 
+    // A need the customer describes as a current pain is a must-address requirement.
+    [GeneratedRegex(@"\b(struggl\w*|no (?:visibility|insight|single|central|clear|real)|over-?allocat\w*|overrun\w*|can'?t|cannot|unable|too many|slow|delay\w*|missed|lack\w*|poor)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex PainMarkers();
+
     private static RequirementPriority DetectPriority(string lower)
     {
         if (CouldMarkers.Any(lower.Contains)) return RequirementPriority.Could;
-        if (MustMarkers.Any(m => ContainsTerm(lower, m))) return RequirementPriority.Must;
+        if (MustMarkers.Any(m => ContainsTerm(lower, m)) || PainMarkers().IsMatch(lower)) return RequirementPriority.Must;
         return RequirementPriority.Should;
     }
 

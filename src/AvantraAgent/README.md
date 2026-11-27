@@ -7,7 +7,7 @@ internal playbooks or anything else at runtime — no code changes.
 
 | Part | Where |
 |---|---|
-| Chat page (with knowledge-base selector and a **Knowledge** panel to add knowledge) | `/` |
+| **Customer Discovery page** — chat + live discovery canvas, knowledge-base selector, **Knowledge** panel | `/` |
 | REST API (OpenAPI at `/openapi/v1.json`) | `/api/...` |
 | MCP server (Streamable HTTP, stateless) | `/mcp` |
 | Health: liveness / readiness (database + indexes loaded) | `/health/live`, `/health/ready` |
@@ -19,7 +19,7 @@ cd src/AvantraAgent
 dotnet run                       # http://localhost:5090
 ```
 
-Creates `avantra-agent.db` (SQLite), seeds the **planview** knowledge base, and syncs its source folder in the background.
+Creates `avantra-agent.db` (SQLite), seeds the **planview** knowledge base, syncs its source folder and — on first start — crawls Planview's public website and documentation in the background (`Ingestion:CrawlOnStartup`).
 Without an AI key it runs in deterministic mode (recommend / refine / compare / search) — fully usable.
 After pulling a version with schema changes, delete the local `.db` file (production uses migrations).
 
@@ -61,26 +61,8 @@ curl -X POST http://localhost:5090/api/knowledge-bases/planview/crawl -H "Conten
 - Pages behind a sign-in are skipped via `skipIfContains` (Planview Portfolios documentation is customer-only, so that section is excluded).
 - Confirm the vendor's website terms allow this use before crawling at scale.
 
-No live Planview API is needed. If you get one later, set `Connectors:Planview:Api:BaseUrl` and the `planview_api_get`
-tool appears automatically (it is hidden while not configured).
-
-#### Where Planview API credentials come from (per Planview's documentation)
-
-The key and URL always come from **a Planview tenant you or the customer own** — Planview does not issue a general public API key.
-
-| Product | Base URL | How to get the key |
-|---|---|---|
-| AgilePlace | `https://<your-account>.leankit.com/io/` | User Profile → **My API Tokens**, or `POST /io/auth/token`. The token is shown only once. |
-| AdaptiveWork | Data-center URL from `getServerDefinition` (e.g. `https://api2.clarizen.com/v2.0/services`) | An admin marks a user as **Integration User** (Global Settings); that user goes to Personal Settings → Integration Settings → **Manage API Keys** → Generate. Keys last 1 year (primary + secondary for rotation). |
-| PPM Pro | `https://<your-subdomain>.ppmpro.com/services/MainService?wsdl` | Web-services **authentication token** (Admin → Web Services). SOAP — needs a dedicated client, not the generic GET tool. |
-| Portfolios | Your Portfolios tenant URL | REST APIs with **OAuth clients** (Administration → Users and Roles → Manage OAuth Clients). The docs need a Planview customer sign-in. |
-
-```bash
-dotnet user-secrets set "Connectors:Planview:Api:BaseUrl" "https://<your-account>.leankit.com/io/"
-dotnet user-secrets set "Connectors:Planview:Api:ApiKey"  "<token>"
-# optional when the product expects another header/scheme:
-# Connectors:Planview:Api:AuthHeader (default Authorization), Connectors:Planview:Api:AuthScheme (default Bearer)
-```
+**Public sources only.** AvantraAgent does not use any Planview API or customer system: knowledge comes from Planview's public
+website and documentation (crawled as above) plus documents you upload (playbooks, discovery frameworks).
 
 Behaviour you can rely on: unchanged files are skipped (content hash), changed files become new versions, suspicious
 files are **quarantined**, uploads can wait for review (`Ingestion:PublishUploadsByDefault=false` → `POST .../documents/{id}/publish`).
@@ -89,11 +71,32 @@ files are **quarantined**, uploads can wait for review (`Ingestion:PublishUpload
 with the same code exists in `knowledge/vendors/<code>/pack.json` (capability model, products, licensing disclosure, rules).
 Without a pack, the knowledge base is fully searchable and usable in chat.
 
+## Customer Discovery (one page)
+
+The home page is a discovery workspace for early customer conversations (sales, pre-sales, solution consultants):
+
+- **Left — conversation.** Type what the customer says: size, teams, goals, current tools, what is not working.
+  Questions ending with `?` are answered from the knowledge base with sources, without changing the assessment.
+- **Right — live discovery canvas**, rebuilt after every message:
+  qualification (status, solution fit %, discovery completeness %, estimated named users) · customer profile (unknowns
+  greyed out) · pain points · next questions to ask · requirements (Must/Should, covered by which product) ·
+  recommended solution and alternatives · licensing quote inputs (never prices) · **Avantra services opportunities**
+  (e.g. Jira integration, migration from Microsoft Project/Excel, financial planning setup, phased rollout) · sources.
+- **Copy / Download summary** — Markdown discovery summary for email, CRM notes or the solution workshop.
+
+Qualification states: *Discovery started* → *Needs more discovery* (under 50% of key facts known) → *Partial fit* /
+*Weak fit — specialist review* → *Qualified for solution workshop* (all must-haves covered, enough facts known).
+Needs described as pain ("resources are constantly over-allocated") count as must-haves.
+
+API: `POST /api/chat` with `"discovery": true` returns `discovery` with every reply; `GET /api/discovery/{chatId}`;
+`GET /api/discovery/{chatId}/summary`. MCP: `discovery_chat`, `discovery_summary`.
+
 ## REST API
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/api/chat` | `{ message, chatId?, knowledgeBase? }` → `{ chatId, answer (Markdown), mode, knowledgeBase }` |
+| POST | `/api/chat` | `{ message, chatId?, knowledgeBase?, discovery? }` → `{ chatId, answer (Markdown), mode, knowledgeBase, discovery? }` |
+| GET | `/api/discovery/{chatId}` · `/summary` | Discovery assessment (JSON) · shareable summary (Markdown) |
 | GET | `/api/status` | Mode, readiness, knowledge bases with document counts |
 | GET | `/api/knowledge-bases` · `/{code}` | List / details |
 | GET | `/api/knowledge-bases/{code}/search?q=` | Direct search of one index |
@@ -117,7 +120,7 @@ Without a pack, the knowledge base is fully searchable and usable in chat.
 ## MCP tools
 
 `ask_advisor`, `knowledge_list`, `knowledge_search`, `advisory_recommend`, `advisory_compare`, `advisory_licensing`,
-`advisory_list_products` (+ `planview_api_get` only when a Planview API is configured). All take a `knowledgeBase` code, so new knowledge bases are usable by
+`advisory_list_products`, `discovery_chat`, `discovery_summary`. All take a `knowledgeBase` code, so new knowledge bases are usable by
 MCP clients immediately. Knowledge management is intentionally **not** exposed via MCP.
 
 ```json
@@ -149,4 +152,4 @@ Configuration is validated at startup; the service refuses to start with an inva
 - **Scaling**: run one instance for the ingestion worker; with `Search:Provider=AzureAiSearch` chat/MCP can scale out
   (the in-memory index is per instance and meant for development). Jobs interrupted by a restart are marked *Interrupted*.
 - **Schema changes**: `dotnet ef migrations add <Name> -p src/Avantra.AIAdvisory.Infrastructure -o Persistence/Migrations`.
-- **Tests**: `dotnet test tests/AvantraAgent.Tests` (23 tests: knowledge bases, jobs, isolation, admin key, URL rules, website crawl with robots/sitemaps/redirects, chat, MCP, AI path).
+- **Tests**: `dotnet test tests/AvantraAgent.Tests` (25 tests: discovery flow, knowledge bases, jobs, isolation, admin key, URL rules, website crawl with robots/sitemaps/redirects, chat, MCP, AI path).

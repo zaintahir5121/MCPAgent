@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AvantraAgent.Advisory;
 using AvantraAgent.Chat;
-using AvantraAgent.Connectors.Planview;
 using AvantraAgent.Hosting;
 using AvantraAgent.Knowledge;
 using AvantraAgent.Mcp;
@@ -77,8 +76,6 @@ builder.Services.AddHttpClient("ingestion", c => c.Timeout = TimeSpan.FromSecond
 
 // ---- Advisory tools, Planview live API, chat agent, MCP server
 builder.Services.AddScoped<AdvisoryTools>();
-builder.Services.Configure<PlanviewApiOptions>(builder.Configuration.GetSection(PlanviewApiOptions.Section));
-builder.Services.AddHttpClient<PlanviewApiClient>(c => c.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddSingleton<ChatSessionStore>();
 builder.Services.AddScoped<ChatService>();
 var mcpJson = new JsonSerializerOptions(McpJsonUtilities.DefaultOptions);
@@ -92,9 +89,6 @@ builder.Services.AddMcpServer(o =>
     })
     .WithHttpTransport(o => o.Stateless = true)
     .WithTools<AgentMcpTools>(mcpJson);
-// Live Planview data is optional: the tool only exists when a Planview API is configured.
-if (!string.IsNullOrWhiteSpace(builder.Configuration["Connectors:Planview:Api:BaseUrl"]))
-    builder.Services.AddMcpServer().WithTools<PlanviewApiMcpTools>(mcpJson);
 
 var app = builder.Build();
 
@@ -137,6 +131,13 @@ api.MapGet("/status", async (IAiProviderInfo ai, KnowledgeBaseService kbs, Knowl
     adminKeyRequired = !string.IsNullOrEmpty(sec.Value.AdminApiKey),
     knowledgeBases = await kbs.ListAsync(ct),
 }).WithTags("Status");
+
+api.MapGet("/discovery/{chatId}", (string chatId, ChatService chat) => chat.GetDiscovery(chatId) is { } d ? Results.Ok(d) : Results.NotFound())
+   .WithTags("Discovery").WithSummary("Current discovery assessment of a conversation.");
+api.MapGet("/discovery/{chatId}/summary", (string chatId, ChatService chat) => chat.GetDiscovery(chatId) is { } d
+        ? Results.File(System.Text.Encoding.UTF8.GetBytes(DiscoveryBuilder.ToMarkdown(d)), "text/markdown", $"discovery-{chatId[..Math.Min(8, chatId.Length)]}.md")
+        : Results.NotFound())
+   .WithTags("Discovery").WithSummary("Discovery summary (Markdown) to share by email, CRM or in the solution workshop.");
 
 api.MapPost("/chat", (ChatRequest r, ChatService chat, CancellationToken ct) => chat.ReplyAsync(r, ct))
    .RequireRateLimiting("chat").WithTags("Chat").WithSummary("Ask AvantraAgent (optionally focused on one knowledge base).");

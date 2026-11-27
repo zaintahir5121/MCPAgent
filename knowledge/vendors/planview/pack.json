@@ -22,7 +22,13 @@
         "portfolio prioritisation",
         "strategic portfolio management",
         "spm",
-        "investment planning"
+        "investment planning",
+        "too many projects",
+        "prioritise",
+        "prioritize",
+        "prioritisation",
+        "prioritization",
+        "project selection"
       ]
     },
     {
@@ -51,7 +57,12 @@
         "resource planning",
         "resource allocation",
         "resourcing",
-        "resource managers"
+        "resource managers",
+        "over-allocated",
+        "overallocated",
+        "over-allocation",
+        "resource conflicts",
+        "who is working on what"
       ]
     },
     {
@@ -64,7 +75,9 @@
         "capacity planning",
         "capacity management",
         "demand and capacity",
-        "capacity"
+        "capacity",
+        "bandwidth",
+        "overloaded teams"
       ]
     },
     {
@@ -81,7 +94,10 @@
         "cost management",
         "forecasting",
         "financials",
-        "cost tracking"
+        "cost tracking",
+        "budget overruns",
+        "cost overruns",
+        "cost control"
       ]
     },
     {
@@ -98,7 +114,9 @@
         "phase gate",
         "approval workflow",
         "approvals",
-        "pmo governance"
+        "pmo governance",
+        "approval process",
+        "approvals process"
       ]
     },
     {
@@ -273,7 +291,12 @@
         "analytics",
         "kpi",
         "kpis",
-        "portfolio reporting"
+        "portfolio reporting",
+        "visibility",
+        "status reports",
+        "status reporting",
+        "single source of truth",
+        "insights"
       ]
     },
     {

@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using AvantraAgent.Advisory;
 using AvantraAgent.Chat;
-using AvantraAgent.Connectors.Planview;
 using Avantra.AIAdvisory.Domain.Advisory;
 using ModelContextProtocol.Server;
 
@@ -23,6 +22,20 @@ public sealed class AgentMcpTools
         [Description("Knowledge base code to focus on, or \"all\" (default)")] string? knowledgeBase = null,
         CancellationToken ct = default)
         => chat.ReplyAsync(new ChatRequest(message, chatId, knowledgeBase), ct);
+
+    [McpServerTool(Name = "discovery_chat", Title = "Customer discovery conversation", ReadOnly = false, Idempotent = false, OpenWorld = false)]
+    [Description("Run an early customer discovery: send what the customer says (needs, pain points, size, tools). Returns the reply plus the live discovery assessment (profile, pain points, requirements, recommendation, qualification, services opportunities, next questions). Pass chatId back each turn.")]
+    public static Task<ChatReply> DiscoveryChat(ChatService chat,
+        [Description("What the customer said, or a question")] string message,
+        [Description("chatId from the previous turn")] string? chatId = null,
+        [Description("Knowledge base code, default planview")] string? knowledgeBase = "planview",
+        CancellationToken ct = default)
+        => chat.ReplyAsync(new ChatRequest(message, chatId, knowledgeBase, Discovery: true), ct);
+
+    [McpServerTool(Name = "discovery_summary", Title = "Discovery summary", ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [Description("Shareable Markdown discovery summary of a discovery conversation (for email, CRM notes or a solution workshop).")]
+    public static string DiscoverySummary(ChatService chat, [Description("chatId of the discovery conversation")] string chatId) =>
+        chat.GetDiscovery(chatId) is { } d ? DiscoveryBuilder.ToMarkdown(d) : "No discovery found for this chatId.";
 
     [McpServerTool(Name = "knowledge_list", Title = "List knowledge bases", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("List all knowledge bases (code, name, description) and whether product advisory is available for each.")]
@@ -82,13 +95,4 @@ public sealed class AgentMcpTools
     public static object Products(AdvisoryTools tools, [Description("Knowledge base code")] string knowledgeBase) =>
         tools.ListProducts(tools.Normalize(knowledgeBase));
 
-}
-
-/// <summary>Registered only when Connectors:Planview:Api:BaseUrl is configured.</summary>
-[McpServerToolType]
-public sealed class PlanviewApiMcpTools
-{
-    [McpServerTool(Name = "planview_api_get", Title = "Read live Planview data", ReadOnly = true, Idempotent = true, OpenWorld = true)]
-    [Description("Live data: read-only GET to the configured Planview API (relative path).")]
-    public static Task<string> PlanviewApi(PlanviewApiClient api, [Description("Relative API path")] string path, CancellationToken ct = default) => api.GetAsync(path, ct);
 }

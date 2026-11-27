@@ -110,3 +110,15 @@ public class RequirementsTests
         public Task<RequirementProfile?> ExtractAsync(string text, VendorPack pack, CancellationToken ct) => throw new HttpRequestException("model down");
     }
 }
+
+public class PainPointPriorityTests
+{
+    [Fact]
+    public async Task Needs_described_as_pain_are_must_haves()
+    {
+        var p = (await new Avantra.AIAdvisory.Application.Requirements.HeuristicRequirementsExtractor()
+            .ExtractAsync("We have no visibility across projects and resources are constantly over-allocated.", TestPack.Planview, default))!;
+        Assert.Contains(p.Requirements, r => r.CapabilityCode == "reporting-analytics" && r.Priority == Avantra.AIAdvisory.Domain.Advisory.RequirementPriority.Must);
+        Assert.Contains(p.Requirements, r => r.CapabilityCode == "resource-management" && r.Priority == Avantra.AIAdvisory.Domain.Advisory.RequirementPriority.Must);
+    }
+}

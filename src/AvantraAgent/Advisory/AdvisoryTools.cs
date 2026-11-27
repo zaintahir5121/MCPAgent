@@ -60,6 +60,8 @@ public sealed class AdvisoryTools(
         return orchestrator.AdviseAsync(new AdvisoryRequest(knowledgeBase, requirements, sessionId), ct);
     }
 
+    public Task<AdvisoryResult?> LatestAsync(Guid sessionId, CancellationToken ct) => orchestrator.GetLatestAsync(sessionId, ct);
+
     public ProductComparison Compare(string knowledgeBase, IReadOnlyList<string> products)
     {
         Pack(knowledgeBase);

@@ -3,79 +3,102 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AvantraAgent</title>
+<title>AvantraAgent Discovery</title>
 <style>
-  :root { --brand:#0b3d91; --brand2:#1565c0; --bg:#f4f6fa; --card:#fff; --text:#1b1f24; --muted:#5b6472; --line:#dde3ec; --me:#e8f0fe; --ok:#0f7b3f; --warn:#a15c00; }
+  :root { --brand:#0b3d91; --brand2:#1565c0; --bg:#f4f6fa; --card:#fff; --text:#1b1f24; --muted:#5b6472; --line:#dde3ec; --me:#e8f0fe; --ok:#0f7b3f; --okbg:#e7f6ee; --warn:#a15c00; --warnbg:#fff4e5; --bad:#b42318; --badbg:#fef3f2; }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
   html, body { height:100%; margin:0; }
   body { font-family:"Segoe UI", system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; }
-  header { background:var(--brand); color:#fff; padding:.6rem 1rem; display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; }
-  header h1 { font-size:1.1rem; margin:0; font-weight:600; }
-  header .status { font-size:.8rem; opacity:.9; flex:1; min-width:160px; }
-  header select, header button { font:inherit; font-size:.85rem; border-radius:6px; border:none; padding:.4rem .6rem; }
+  header { background:var(--brand); color:#fff; padding:.55rem 1rem; display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; }
+  header h1 { font-size:1.05rem; margin:0; font-weight:600; } header h1 span { font-weight:400; opacity:.8; }
+  header .status { font-size:.78rem; opacity:.9; flex:1; min-width:140px; }
+  header select, header button { font:inherit; font-size:.85rem; border-radius:6px; border:none; padding:.38rem .6rem; }
   header button { background:#fff; color:var(--brand); cursor:pointer; }
+  .tabs { display:none; background:#fff; border-bottom:1px solid var(--line); }
+  .tabs button { flex:1; font:inherit; border:none; background:none; padding:.6rem; cursor:pointer; color:var(--muted); border-bottom:3px solid transparent; }
+  .tabs button.on { color:var(--brand); border-bottom-color:var(--brand); font-weight:600; }
   .layout { flex:1; display:flex; min-height:0; }
-  main { flex:1; overflow-y:auto; padding:1rem; }
-  .wrap { max-width:860px; margin:0 auto; }
-  .msg { margin:.6rem 0; display:flex; }
-  .msg .bubble { padding:.7rem .9rem; border-radius:12px; max-width:100%; line-height:1.45; overflow-x:auto; }
-  .msg.me { justify-content:flex-end; } .msg.me .bubble { background:var(--me); max-width:80%; white-space:pre-wrap; }
+  .chatcol { flex:1 1 46%; display:flex; flex-direction:column; min-width:0; border-right:1px solid var(--line); }
+  .log { flex:1; overflow-y:auto; padding:1rem; }
+  .msg { margin:.55rem 0; display:flex; }
+  .msg .bubble { padding:.65rem .85rem; border-radius:12px; max-width:100%; line-height:1.45; overflow-x:auto; font-size:.93rem; }
+  .msg.me { justify-content:flex-end; } .msg.me .bubble { background:var(--me); max-width:85%; white-space:pre-wrap; }
   .msg.bot .bubble { background:var(--card); border:1px solid var(--line); width:100%; }
-  .msg.sys .bubble { background:#fff7e6; border:1px solid #f3d9a4; font-size:.88rem; width:100%; }
-  .bubble h3 { margin:.1rem 0 .4rem; color:var(--brand); font-size:1.05rem; }
-  .bubble p { margin:.35rem 0; } .bubble ul, .bubble ol { margin:.3rem 0; padding-left:1.3rem; }
-  .bubble table { border-collapse:collapse; font-size:.88rem; margin:.4rem 0; }
-  .bubble th, .bubble td { border:1px solid var(--line); padding:.3rem .5rem; text-align:left; } .bubble th { background:#f3f6fb; }
-  .meta { font-size:.72rem; color:var(--muted); margin-top:.35rem; }
-  .chips { display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem 0 .2rem; }
-  .chips button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:.35rem .75rem; font:inherit; font-size:.85rem; cursor:pointer; color:var(--brand2); text-align:left; }
-  footer { background:#fff; border-top:1px solid var(--line); padding:.7rem 1rem; }
-  form.chat { max-width:860px; margin:0 auto; display:flex; gap:.5rem; }
-  textarea { flex:1; resize:none; font:inherit; padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; min-height:46px; max-height:160px; }
+  .msg.sys .bubble { background:#fff7e6; border:1px solid #f3d9a4; font-size:.85rem; width:100%; }
+  .bubble h3 { margin:.1rem 0 .4rem; color:var(--brand); font-size:1rem; }
+  .bubble p { margin:.3rem 0; } .bubble ul, .bubble ol { margin:.3rem 0; padding-left:1.2rem; }
+  .bubble table { border-collapse:collapse; font-size:.85rem; margin:.4rem 0; } .bubble th, .bubble td { border:1px solid var(--line); padding:.25rem .45rem; text-align:left; } .bubble th { background:#f3f6fb; }
+  .meta { font-size:.7rem; color:var(--muted); margin-top:.3rem; }
+  .chips { display:flex; flex-direction:column; gap:.35rem; margin:.5rem 0 .2rem; }
+  .chips button { border:1px solid var(--line); background:#fff; border-radius:10px; padding:.45rem .7rem; font:inherit; font-size:.85rem; cursor:pointer; color:var(--brand2); text-align:left; }
+  form.chat { display:flex; gap:.5rem; padding:.7rem 1rem; background:#fff; border-top:1px solid var(--line); }
+  textarea { flex:1; resize:none; font:inherit; padding:.55rem .7rem; border:1px solid var(--line); border-radius:8px; min-height:46px; max-height:160px; }
   .btn { background:var(--brand2); color:#fff; border:none; border-radius:8px; padding:.5rem 1rem; font:inherit; cursor:pointer; }
-  .btn:disabled { opacity:.5; cursor:default; } .btn.light { background:#fff; color:var(--brand2); border:1px solid var(--line); }
-  .hint { max-width:860px; margin:.35rem auto 0; font-size:.75rem; color:var(--muted); }
-  aside { width:400px; max-width:100%; background:#fff; border-left:1px solid var(--line); overflow-y:auto; padding:1rem; display:none; }
-  aside.open { display:block; }
+  .btn:disabled { opacity:.5; cursor:default; } .btn.light { background:#fff; color:var(--brand2); border:1px solid var(--line); } .btn.sm { padding:.3rem .6rem; font-size:.8rem; }
+  .canvas { flex:1 1 54%; overflow-y:auto; padding:1rem; min-width:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:.75rem .9rem; margin-bottom:.75rem; }
+  .card h2 { font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 .5rem; display:flex; justify-content:space-between; align-items:center; }
+  .empty { color:#9aa3b2; font-style:italic; font-size:.88rem; }
+  .qual { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+  .status { font-weight:700; font-size:1.05rem; }
+  .pill { display:inline-block; font-size:.75rem; padding:.12rem .55rem; border-radius:999px; background:#eef2f7; color:var(--muted); margin:.1rem .25rem .1rem 0; }
+  .pill.ok { background:var(--okbg); color:var(--ok); } .pill.warn { background:var(--warnbg); color:var(--warn); } .pill.bad { background:var(--badbg); color:var(--bad); }
+  .meter { flex:1; min-width:150px; } .meter label { font-size:.75rem; color:var(--muted); display:flex; justify-content:space-between; }
+  .bar { height:8px; background:#eef2f7; border-radius:99px; overflow:hidden; } .bar i { display:block; height:100%; background:var(--brand2); }
+  .facts { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:.4rem .8rem; font-size:.88rem; }
+  .facts div span { display:block; font-size:.72rem; color:var(--muted); } .facts .unknown { color:#b0b7c3; font-style:italic; }
+  table.req { width:100%; border-collapse:collapse; font-size:.86rem; } table.req th, table.req td { text-align:left; padding:.3rem .35rem; border-bottom:1px solid var(--line); } table.req th { color:var(--muted); font-weight:600; font-size:.75rem; }
+  .gap { color:var(--bad); font-weight:600; }
+  ul.clean { margin:0; padding-left:1.1rem; font-size:.9rem; } ul.clean li { margin:.2rem 0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; } .grid2 .card { margin-bottom:0; }
+  .rec { font-size:1rem; font-weight:700; color:var(--brand); }
+  aside { width:400px; max-width:100%; background:#fff; border-left:1px solid var(--line); overflow-y:auto; padding:1rem; }
   aside h2 { font-size:1rem; margin:.2rem 0 .8rem; color:var(--brand); }
-  .kb { border:1px solid var(--line); border-radius:10px; padding:.7rem; margin-bottom:.7rem; font-size:.88rem; }
-  .kb .top { display:flex; justify-content:space-between; gap:.5rem; align-items:baseline; }
-  .kb .code { color:var(--muted); font-size:.78rem; }
+  .kb { border:1px solid var(--line); border-radius:10px; padding:.7rem; margin-bottom:.7rem; font-size:.86rem; }
+  .kb .top { display:flex; justify-content:space-between; gap:.5rem; align-items:baseline; } .kb .code { color:var(--muted); font-size:.76rem; }
   .kb .row { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.5rem; }
-  .kb .row .btn { padding:.3rem .6rem; font-size:.8rem; }
-  .badge { display:inline-block; font-size:.72rem; padding:.05rem .45rem; border-radius:999px; background:#eef2f7; color:var(--muted); margin-right:.25rem; }
-  .badge.ok { background:#e7f6ee; color:var(--ok); } .badge.warn { background:#fff4e5; color:var(--warn); }
-  .field { display:flex; flex-direction:column; gap:.2rem; margin-bottom:.5rem; font-size:.82rem; color:var(--muted); }
-  .field input { font:inherit; font-size:.88rem; padding:.45rem .55rem; border:1px solid var(--line); border-radius:6px; color:var(--text); }
-  details { border:1px solid var(--line); border-radius:10px; padding:.6rem .7rem; margin-bottom:.8rem; }
-  details summary { cursor:pointer; font-weight:600; color:var(--brand2); font-size:.9rem; }
-  .jobs { font-size:.8rem; color:var(--muted); }
-  .jobs div { padding:.25rem 0; border-bottom:1px dashed var(--line); }
-  @media (max-width: 760px) { aside { width:100%; border-left:none; } .layout.panel-open main { display:none; } }
+  .field { display:flex; flex-direction:column; gap:.2rem; margin-bottom:.5rem; font-size:.8rem; color:var(--muted); }
+  .field input { font:inherit; font-size:.86rem; padding:.45rem .55rem; border:1px solid var(--line); border-radius:6px; color:var(--text); }
+  details { border:1px solid var(--line); border-radius:10px; padding:.6rem .7rem; margin-bottom:.8rem; } details summary { cursor:pointer; font-weight:600; color:var(--brand2); font-size:.9rem; }
+  .jobs { font-size:.78rem; color:var(--muted); } .jobs div { padding:.25rem 0; border-bottom:1px dashed var(--line); }
+  @media (max-width: 900px) {
+    .tabs { display:flex; } .layout { flex-direction:column; } .chatcol { border-right:none; }
+    body[data-tab=chat] .canvas, body[data-tab=discovery] .chatcol { display:none; }
+    .grid2 { grid-template-columns:1fr; } aside { width:100%; border-left:none; }
+    .layout.panel-open .chatcol, .layout.panel-open .canvas { display:none; }
+  }
 </style>
 </head>
-<body>
+<body data-tab="chat">
 <header>
-  <h1>AvantraAgent</h1>
-  <select id="kbSelect" title="Knowledge base to use"><option value="all">All knowledge bases</option></select>
+  <h1>AvantraAgent <span>· Customer Discovery</span></h1>
+  <select id="kbSelect" title="Knowledge base"></select>
   <div class="status" id="status">Connecting…</div>
   <button id="toggleKb">Knowledge</button>
-  <button id="newchat">New chat</button>
+  <button id="newchat">New discovery</button>
 </header>
+<div class="tabs"><button data-tab="chat" class="on">Chat</button><button data-tab="discovery">Discovery</button></div>
 <div class="layout">
-  <main id="main"><div class="wrap" id="log">
-    <div class="msg bot"><div class="bubble">
-      <h3>Hi — I'm AvantraAgent.</h3>
-      <p>Ask anything in the knowledge bases, or describe your organisation and needs to get product recommendations with sources. Use <b>Knowledge</b> (top right) to add knowledge bases and documents.</p>
-      <div class="chips" id="chips">
-        <button>We have 2,000 employees, 150 project managers and 40 portfolio managers. We need portfolio management, strategic planning, resource management and financial planning. Which Planview products do we need?</button>
-        <button>What does Planview AgilePlace do?</button>
-        <button>Compare Planview Portfolios vs AdaptiveWork vs PPM Pro</button>
-      </div>
-    </div></div>
-  </div></main>
-  <aside id="panel">
+  <section class="chatcol">
+    <div class="log" id="log">
+      <div class="msg bot"><div class="bubble">
+        <h3>Let's discover what this customer needs.</h3>
+        <p>Tell me about the customer: size, teams, goals, current tools and what is not working today. I build the discovery on the right as we talk — requirements, a Planview recommendation with sources, qualification, Avantra services opportunities and the next questions to ask. Ask a question (ending with ?) any time to search the knowledge base.</p>
+        <div class="chips" id="chips">
+          <button>We're a 2,000-person company with 150 project managers and 40 portfolio managers. We have no visibility across our projects, resources are constantly over-allocated and budgets overrun.</button>
+          <button>We plan everything in Excel and Microsoft Project, approvals are slow and we have too many projects to prioritise.</button>
+          <button>Our 60 Scrum teams work in Jira and leadership can't see how agile work connects to strategy. We need strategic planning and portfolio management.</button>
+        </div>
+      </div></div>
+    </div>
+    <form class="chat" id="form">
+      <textarea id="input" rows="1" placeholder="What did the customer say? Or ask a question…" maxlength="4000"></textarea>
+      <button class="btn" id="send" type="submit">Send</button>
+    </form>
+  </section>
+  <section class="canvas" id="canvas"></section>
+  <aside id="panel" hidden>
     <h2>Knowledge bases</h2>
     <div class="field" id="adminKeyField" hidden><label for="adminKey">Admin key (required by this server)</label><input id="adminKey" type="password" autocomplete="off"></div>
     <div id="kbList"></div>
@@ -95,18 +118,10 @@
     <input type="file" id="filePicker" multiple accept=".pdf,.docx,.html,.htm,.md,.markdown,.txt" hidden>
   </aside>
 </div>
-<footer>
-  <form class="chat" id="form">
-    <textarea id="input" rows="1" placeholder="Ask anything, or describe your needs…" maxlength="4000"></textarea>
-    <button class="btn" id="send" type="submit">Send</button>
-  </form>
-  <div class="hint">Enter to send · Shift+Enter for a new line · Prices and licence tiers are never invented — they are confirmed with the vendor.</div>
-</footer>
 <script>
 const $ = id => document.getElementById(id);
 const store = { get: k => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
-let chatId = store.get('avantraChatId');
-let uploadTarget = null;
+let chatId = store.get('avantraDiscoveryId'), discovery = null, uploadTarget = null;
 const recentJobs = new Map();
 
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -114,12 +129,9 @@ const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*
 function md(text) {
   const lines = text.replace(/\r/g,'').split('\n'); let html = '', list = null, table = [];
   const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
-  const flushTable = () => {
-    if (!table.length) return;
+  const flushTable = () => { if (!table.length) return;
     const rows = table.filter(r => !/^\|\s*-+/.test(r)).map(r => r.trim().replace(/^\||\|$/g,'').split('|').map(c => c.trim()));
-    html += '<table>' + rows.map((r,i) => '<tr>' + r.map(c => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join('') + '</tr>').join('') + '</table>';
-    table = [];
-  };
+    html += '<table>' + rows.map((r,i) => '<tr>' + r.map(c => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join('') + '</tr>').join('') + '</table>'; table = []; };
   for (const line of lines) {
     if (/^\s*\|/.test(line)) { closeList(); table.push(line); continue; } else flushTable();
     let m;
@@ -131,22 +143,65 @@ function md(text) {
   }
   closeList(); flushTable(); return html;
 }
-
 function add(role, content, meta) {
   const div = document.createElement('div'); div.className = 'msg ' + role;
   const b = document.createElement('div'); b.className = 'bubble';
-  if (role === 'me') b.textContent = content; else if (role === 'bot') b.innerHTML = md(content); else b.textContent = content;
+  if (role === 'bot') b.innerHTML = md(content); else b.textContent = content;
   if (meta) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = meta; b.appendChild(m); }
-  div.appendChild(b); $('log').appendChild(div); $('main').scrollTop = $('main').scrollHeight; return div;
+  div.appendChild(b); $('log').appendChild(div); $('log').scrollTop = $('log').scrollHeight; return div;
 }
-
 async function api(path, opts = {}) {
-  const headers = Object.assign({}, opts.headers || {});
-  const key = $('adminKey').value; if (key) headers['X-Admin-Key'] = key;
+  const headers = Object.assign({}, opts.headers || {}); const key = $('adminKey').value; if (key) headers['X-Admin-Key'] = key;
   const res = await fetch(path, Object.assign({}, opts, { headers }));
   const text = await res.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = { title: text }; }
   if (!res.ok) throw new Error((data && (data.detail || data.title)) || `HTTP ${res.status}`);
   return data;
+}
+
+// ---------------------------------------------------------------- discovery canvas
+const statusClass = s => /Qualified/.test(s) ? 'ok' : /Weak/.test(s) ? 'bad' : /started/.test(s) ? '' : 'warn';
+function renderCanvas() {
+  const d = discovery;
+  if (!d) { $('canvas').innerHTML = `<div class="card"><h2>Discovery</h2><div class="empty">The assessment appears here as soon as you describe the customer.</div></div>`; return; }
+  const q = d.qualification, o = d.organization || {};
+  const fact = (label, v) => `<div><span>${label}</span>${v == null || v === '' ? '<em class="unknown">not known yet</em>' : esc(v)}</div>`;
+  const list = (items, empty) => items && items.length ? `<ul class="clean">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : `<div class="empty">${empty}</div>`;
+  const rec = d.recommendation;
+  $('canvas').innerHTML = `
+    <div class="card">
+      <h2>Qualification <span><button class="btn light sm" id="copySummary">Copy summary</button> <button class="btn sm" id="dlSummary">Download summary</button></span></h2>
+      <div class="qual">
+        <div><span class="pill ${statusClass(q.status)}" style="font-size:.85rem">${esc(q.status)}</span>${q.estimatedUsers ? `<span class="pill">~${q.estimatedUsers} named users</span>` : ''}</div>
+        <div class="meter"><label><span>Solution fit</span><b>${q.fitPercent}%</b></label><div class="bar"><i style="width:${q.fitPercent}%"></i></div></div>
+        <div class="meter"><label><span>Discovery completeness</span><b>${q.completenessPercent}%</b></label><div class="bar"><i style="width:${q.completenessPercent}%;background:var(--ok)"></i></div></div>
+      </div>
+      ${list(q.reasons, '')}
+    </div>
+    <div class="card"><h2>Customer profile</h2><div class="facts">
+      ${fact('Employees', o.employees)}${fact('Project managers', o.projectManagers)}${fact('Portfolio managers', o.portfolioManagers)}
+      ${fact('Resource managers', o.resourceManagers)}${fact('Team members', o.teamMembers)}${fact('Business units', o.businessUnits)}
+      ${fact('Delivery approach', o.methodology)}${fact('Hosting', o.deploymentPreference)}${fact('Current tools', (o.existingSystems || []).join(', '))}
+    </div></div>
+    <div class="grid2">
+      <div class="card"><h2>Pain points</h2>${list(d.painPoints, 'None captured yet — ask what is not working today.')}</div>
+      <div class="card"><h2>Next questions to ask</h2>${list(d.openQuestions, 'No open questions.')}</div>
+    </div>
+    <div class="card" style="margin-top:.75rem"><h2>Requirements</h2>${d.requirements.length ? `<table class="req"><tr><th>Need</th><th>Priority</th><th>Covered by</th><th>Coverage</th></tr>
+      ${d.requirements.map(r => `<tr><td>${esc(r.capability)}${r.origin === 'Inferred' ? ' <span class="pill">inferred</span>' : ''}</td><td>${esc(r.priority)}</td><td>${esc(r.coveredBy || '-')}</td><td class="${r.coverage === 'Gap' ? 'gap' : ''}">${esc(r.coverage)}</td></tr>`).join('')}</table>` : '<div class="empty">No requirements yet.</div>'}</div>
+    <div class="card"><h2>Recommended solution</h2>${rec ? `
+      <div class="rec">${esc(rec.products.join(' + '))}</div>
+      <div style="margin:.3rem 0">${rec.mustTotal ? `<span class="pill ok">${rec.mustCovered} of ${rec.mustTotal} must-haves</span>` : ''}<span class="pill">fit ${rec.fitPercent}%</span>${rec.gaps.map(g => `<span class="pill bad">gap: ${esc(g)}</span>`).join('')}</div>
+      ${rec.avantraRules.length ? `<div style="font-size:.82rem;color:var(--muted)">Avantra experience: ${esc(rec.avantraRules.join('; '))}</div>` : ''}
+      ${d.alternatives.length ? `<div style="margin-top:.4rem;font-size:.86rem"><b>Alternatives:</b> ${d.alternatives.map(a => `${esc(a.products.join(' + '))} (fit ${a.fitPercent}%${a.missing.length ? ', missing ' + esc(a.missing.join(', ')) : ''})`).join(' · ')}</div>` : ''}
+      ${d.licensingInputs.length ? `<div style="margin-top:.4rem;font-size:.86rem"><b>Licensing quote inputs</b> (pricing confirmed with the vendor): ${esc(d.licensingInputs.join(' · '))}</div>` : ''}` : '<div class="empty">Appears once needs are known.</div>'}</div>
+    <div class="card"><h2>Avantra services opportunities</h2>${d.servicesOpportunities.length ? `<ul class="clean">${d.servicesOpportunities.map(s => `<li><b>${esc(s.title)}</b> — ${esc(s.why)}</li>`).join('')}</ul>` : '<div class="empty">Appear as the solution and current tools become clear.</div>'}</div>
+    <div class="card"><h2>Sources</h2>${d.sources.length ? `<ul class="clean">${d.sources.map(s => `<li>[${esc(s.id)}] ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>` : esc(s.title)}</li>`).join('')}</ul>` : '<div class="empty">—</div>'}
+      ${d.disclaimer ? `<div style="font-size:.75rem;color:var(--warn);margin-top:.4rem">${esc(d.disclaimer)}</div>` : ''}</div>`;
+  $('dlSummary').onclick = () => { if (chatId) location.href = `api/discovery/${encodeURIComponent(chatId)}/summary`; };
+  $('copySummary').onclick = async () => {
+    try { const t = await (await fetch(`api/discovery/${encodeURIComponent(chatId)}/summary`)).text(); await navigator.clipboard.writeText(t); add('sys', 'Discovery summary copied — paste it into an email or the CRM.'); }
+    catch { add('sys', 'Copy failed; use Download summary instead.'); }
+  };
 }
 
 async function send(text) {
@@ -154,104 +209,94 @@ async function send(text) {
   add('me', text); $('input').value = ''; $('send').disabled = true;
   const wait = add('bot', '_Thinking…_');
   try {
-    const data = await api('api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text, chatId, knowledgeBase: $('kbSelect').value }) });
-    wait.remove(); chatId = data.chatId; store.set('avantraChatId', chatId);
-    add('bot', data.answer, `mode: ${data.mode} · knowledge: ${data.knowledgeBase}`);
+    const data = await api('api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text, chatId, knowledgeBase: $('kbSelect').value, discovery: true }) });
+    wait.remove(); chatId = data.chatId; store.set('avantraDiscoveryId', chatId);
+    add('bot', data.answer, `mode: ${data.mode}`);
+    if (data.discovery) { discovery = data.discovery; renderCanvas(); }
   } catch (e) { wait.remove(); add('sys', e.message); }
   finally { $('send').disabled = false; $('input').focus(); }
 }
 
+// ---------------------------------------------------------------- knowledge panel
 function renderKbs(kbs) {
-  const sel = $('kbSelect'), current = sel.value || store.get('avantraKb') || 'all';
-  sel.innerHTML = '<option value="all">All knowledge bases</option>' + kbs.filter(k => k.isEnabled).map(k => `<option value="${esc(k.code)}">${esc(k.name)}</option>`).join('');
-  sel.value = [...sel.options].some(o => o.value === current) ? current : 'all';
+  const sel = $('kbSelect'), current = sel.value || store.get('avantraKb') || 'planview';
+  sel.innerHTML = kbs.filter(k => k.isEnabled).map(k => `<option value="${esc(k.code)}">${esc(k.name)}</option>`).join('') + '<option value="all">All knowledge bases</option>';
+  sel.value = [...sel.options].some(o => o.value === current) ? current : sel.options[0]?.value;
   $('kbList').innerHTML = kbs.map(k => `
     <div class="kb">
       <div class="top"><b>${esc(k.name)}</b><span class="code">${esc(k.code)} · ${esc(k.indexName)}</span></div>
       <div>${esc(k.description || '')}</div>
-      <div style="margin-top:.35rem">
-        <span class="badge ok">${k.publishedDocuments} document${k.publishedDocuments === 1 ? '' : 's'}</span>
-        ${k.pendingReview ? `<span class="badge warn">${k.pendingReview} waiting review</span>` : ''}
-        ${k.quarantined ? `<span class="badge warn">${k.quarantined} quarantined</span>` : ''}
-        ${k.advisoryEnabled ? '<span class="badge">product advisory</span>' : '<span class="badge">search</span>'}
-        ${k.isEnabled ? '' : '<span class="badge warn">disabled</span>'}
-      </div>
-      <div class="code" style="margin-top:.3rem">${k.sourceFolder ? `Folder: ${esc(k.sourceFolder)}${k.syncIntervalHours ? ` · every ${k.syncIntervalHours} h` : ''}` : 'No source folder'}${k.lastSyncedAt ? ` · last sync ${new Date(k.lastSyncedAt).toLocaleString()}` : ''}</div>
-      ${k.hasCrawl ? `<div class="code">Website crawl configured${k.lastCrawledAt ? ` · last crawl ${new Date(k.lastCrawledAt).toLocaleString()}` : ' · not crawled yet'}</div>` : ''}
+      <div style="margin-top:.35rem"><span class="pill ok">${k.publishedDocuments} document${k.publishedDocuments === 1 ? '' : 's'}</span>
+        ${k.pendingReview ? `<span class="pill warn">${k.pendingReview} waiting review</span>` : ''}${k.quarantined ? `<span class="pill warn">${k.quarantined} quarantined</span>` : ''}
+        <span class="pill">${k.advisoryEnabled ? 'discovery + advisory' : 'search'}</span></div>
+      ${k.hasCrawl ? `<div class="code">Public website crawl${k.lastCrawledAt ? ` · last crawl ${new Date(k.lastCrawledAt).toLocaleString()}` : ' · not crawled yet'}</div>` : ''}
       <div class="row">
-        <button class="btn light" data-act="upload" data-kb="${esc(k.code)}">Upload files</button>
-        <button class="btn light" data-act="url" data-kb="${esc(k.code)}">Add from URL</button>
-        ${k.sourceFolder ? `<button class="btn light" data-act="sync" data-kb="${esc(k.code)}">Sync now</button>` : ''}
-        ${k.hasCrawl ? `<button class="btn light" data-act="crawl" data-kb="${esc(k.code)}">Crawl website</button>` : ''}
+        <button class="btn light sm" data-act="upload" data-kb="${esc(k.code)}">Upload files</button>
+        <button class="btn light sm" data-act="url" data-kb="${esc(k.code)}">Add from URL</button>
+        ${k.sourceFolder ? `<button class="btn light sm" data-act="sync" data-kb="${esc(k.code)}">Sync folder</button>` : ''}
+        ${k.hasCrawl ? `<button class="btn light sm" data-act="crawl" data-kb="${esc(k.code)}">Crawl website</button>` : ''}
       </div>
     </div>`).join('');
 }
-
 async function refresh() {
   try {
-    const s = await api('api/status');
-    $('adminKeyField').hidden = !s.adminKeyRequired;
+    const s = await api('api/status'); $('adminKeyField').hidden = !s.adminKeyRequired;
     const docs = s.knowledgeBases.reduce((n, k) => n + k.publishedDocuments, 0);
-    $('status').textContent = `${s.mode} · ${s.knowledgeBases.length} knowledge base(s) · ${docs} documents${s.ready ? '' : ' · loading…'}`;
+    $('status').textContent = `${s.mode} · ${docs} public & internal documents${s.ready ? '' : ' · loading…'}`;
     renderKbs(s.knowledgeBases);
-  } catch (e) { $('status').textContent = 'Service not reachable'; }
+  } catch { $('status').textContent = 'Service not reachable'; }
 }
-
 function renderJobs() {
   const jobs = [...recentJobs.values()].sort((a, b) => b.queuedAt.localeCompare(a.queuedAt)).slice(0, 8);
-  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<div><b>${esc(j.knowledgeBase)}</b> · ${esc(j.kind)} · <b>${esc(j.state)}</b> · ${j.items} item(s): ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} review, ${j.quarantined} quarantined, ${j.failed} failed${j.error ? ' · ' + esc(j.error) : ''}${['Queued','Running'].includes(j.state) ? ` <button class="btn light" style="padding:.1rem .5rem;font-size:.75rem" data-cancel="${esc(j.id)}">Cancel</button>` : ''}</div>`).join('') : 'No jobs yet.';
+  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<div><b>${esc(j.knowledgeBase)}</b> · ${esc(j.kind)} · <b>${esc(j.state)}</b> · ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.quarantined} quarantined, ${j.failed} failed${j.error ? ' · ' + esc(j.error) : ''}${['Queued','Running'].includes(j.state) ? ` <button class="btn light sm" data-cancel="${esc(j.id)}">Cancel</button>` : ''}</div>`).join('') : 'No jobs yet.';
 }
-
 async function track(job) {
   recentJobs.set(job.id, job); renderJobs();
   for (let i = 0; i < 43200; i++) {
     await new Promise(r => setTimeout(r, i < 60 ? 1000 : 5000));
     try { const j = await api(`api/jobs/${job.id}`); recentJobs.set(j.id, j); renderJobs();
-      if (!['Queued','Running'].includes(j.state)) { add('sys', `Ingestion into "${j.knowledgeBase}" ${j.state.toLowerCase()}: ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.pendingReview} waiting review, ${j.quarantined} quarantined, ${j.failed} failed.`); refresh(); return; }
+      if (!['Queued','Running'].includes(j.state)) { add('sys', `Ingestion into "${j.knowledgeBase}" ${j.state.toLowerCase()}: ${j.created} new, ${j.updated} updated, ${j.unchanged} unchanged, ${j.quarantined} quarantined, ${j.failed} failed.`); refresh(); return; }
     } catch { }
   }
 }
-
 $('kbList').addEventListener('click', async e => {
-  const b = e.target.closest('button[data-act]'); if (!b) return;
-  const kb = b.dataset.kb;
+  const b = e.target.closest('button[data-act]'); if (!b) return; const kb = b.dataset.kb;
   try {
     if (b.dataset.act === 'upload') { uploadTarget = kb; $('filePicker').value = ''; $('filePicker').click(); }
     if (b.dataset.act === 'sync') track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/sync`, { method:'POST' }));
-    if (b.dataset.act === 'crawl') { track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/crawl`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })); add('sys', 'Website crawl started. It runs in the background and respects the site\'s crawl rules — large sites can take hours. Progress is under Recent jobs.'); }
-    if (b.dataset.act === 'url') {
-      const url = prompt('https:// URL of the document (the host must be allowed by the server):'); if (!url) return;
-      track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/documents/from-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }) }));
-    }
+    if (b.dataset.act === 'crawl') { track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/crawl`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })); add('sys', 'Public website crawl started in the background (respects the site\'s crawl rules; large sites take hours).'); }
+    if (b.dataset.act === 'url') { const url = prompt('https:// URL of a public document (host must be allowed by the server):'); if (!url) return;
+      track(await api(`api/knowledge-bases/${encodeURIComponent(kb)}/documents/from-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }) })); }
   } catch (err) { add('sys', err.message); }
 });
-$('jobs').addEventListener('click', async e => {
-  const b = e.target.closest('button[data-cancel]'); if (!b) return;
-  try { await api(`api/jobs/${b.dataset.cancel}/cancel`, { method:'POST' }); add('sys', 'Cancellation requested; the job stops after the current page or file.'); }
-  catch (err) { add('sys', err.message); }
-});
+$('jobs').addEventListener('click', async e => { const b = e.target.closest('button[data-cancel]'); if (!b) return;
+  try { await api(`api/jobs/${b.dataset.cancel}/cancel`, { method:'POST' }); add('sys', 'Cancellation requested.'); } catch (err) { add('sys', err.message); } });
 $('filePicker').addEventListener('change', async () => {
   const files = [...$('filePicker').files]; if (!files.length || !uploadTarget) return;
   const fd = new FormData(); files.forEach(f => fd.append('files', f));
-  try { track(await api(`api/knowledge-bases/${encodeURIComponent(uploadTarget)}/documents`, { method:'POST', body: fd })); }
-  catch (err) { add('sys', err.message); }
+  try { track(await api(`api/knowledge-bases/${encodeURIComponent(uploadTarget)}/documents`, { method:'POST', body: fd })); } catch (err) { add('sys', err.message); }
 });
 $('kbForm').addEventListener('submit', async e => {
   e.preventDefault(); const f = new FormData(e.target);
-  const body = { code: f.get('code').trim(), name: f.get('name').trim(), description: f.get('description').trim() || null,
-                 sourceFolder: f.get('sourceFolder').trim() || null, syncIntervalHours: Number(f.get('syncIntervalHours') || 0) };
+  const body = { code: f.get('code').trim(), name: f.get('name').trim(), description: f.get('description').trim() || null, sourceFolder: f.get('sourceFolder').trim() || null, syncIntervalHours: Number(f.get('syncIntervalHours') || 0) };
   try { const kb = await api('api/knowledge-bases', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-        add('sys', `Knowledge base "${kb.name}" created with its own index "${kb.indexName}". Upload documents to fill it.`); e.target.reset(); refresh(); }
-  catch (err) { add('sys', err.message); }
+    add('sys', `Knowledge base "${kb.name}" created with its own index "${kb.indexName}".`); e.target.reset(); refresh(); } catch (err) { add('sys', err.message); }
 });
 
+// ---------------------------------------------------------------- wiring
 $('form').addEventListener('submit', e => { e.preventDefault(); send($('input').value); });
 $('input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($('input').value); } });
 $('chips').addEventListener('click', e => { if (e.target.tagName === 'BUTTON') send(e.target.textContent); });
 $('kbSelect').addEventListener('change', () => store.set('avantraKb', $('kbSelect').value));
-$('toggleKb').addEventListener('click', () => { const open = $('panel').classList.toggle('open'); document.querySelector('.layout').classList.toggle('panel-open', open); $('toggleKb').textContent = open ? 'Close knowledge' : 'Knowledge'; });
-$('newchat').addEventListener('click', () => { chatId = null; store.set('avantraChatId', null); location.reload(); });
-refresh(); setInterval(refresh, 30000);
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.tab = b.dataset.tab; document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b)); }));
+$('toggleKb').addEventListener('click', () => { const open = $('panel').hidden; $('panel').hidden = !open; document.querySelector('.layout').classList.toggle('panel-open', open); $('toggleKb').textContent = open ? 'Close knowledge' : 'Knowledge'; });
+$('newchat').addEventListener('click', () => { chatId = null; store.set('avantraDiscoveryId', null); location.reload(); });
+(async () => {
+  renderCanvas(); await refresh();
+  if (chatId) { try { discovery = await api(`api/discovery/${encodeURIComponent(chatId)}`); renderCanvas(); } catch { chatId = null; store.set('avantraDiscoveryId', null); } }
+  setInterval(refresh, 30000);
+})();
 </script>
 </body>
 </html>
